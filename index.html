@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f19">
+  <meta name="description" content="Interactive 3D flashcards app for mastering all 50 US States and Capitals with progress tracking, iPad touch gestures, and practice filters.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="States & Capitals">
+  
+  <title>US States & Capitals - Flashcard Study App</title>
+  
+  <!-- Web Manifest for iPad PWA Installation -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">🇺🇸</div>
+        <div class="brand-title">
+          <h1>States & Capitals</h1>
+          <p>Flashcard Mastery Study App</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btnReset" class="btn-icon-secondary" title="Reset Study Progress" aria-label="Reset Study Progress">
+          🔄
+        </button>
+      </div>
+    </header>
+
+    <!-- Progress & Study Stats Card -->
+    <section class="stats-card" aria-label="Study Progress">
+      <div class="stats-summary">
+        <div class="stats-badges">
+          <span class="stat-badge known" id="statBadgeKnown" title="Cards marked as Got It">
+            ✅ <span id="statKnownCount">0</span> Mastered
+          </span>
+          <span class="stat-badge missed" id="statBadgeMissed" title="Cards marked as Need Practice">
+            ❌ <span id="statMissedCount">0</span> Need Practice
+          </span>
+          <span class="stat-badge remaining" id="statBadgeRemaining" title="Unseen cards in deck">
+            ⚪ <span id="statRemainingCount">50</span> Left
+          </span>
+        </div>
+        <div class="card-index-indicator" id="masteryPercentText">0%</div>
+      </div>
+      <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Mastery Progress">
+        <div class="progress-bar-known" id="progressBarKnown" style="width: 0%"></div>
+        <div class="progress-bar-missed" id="progressBarMissed" style="width: 0%"></div>
+      </div>
+    </section>
+
+    <!-- Study Controls (Direction, Deck Filters, Shuffle) -->
+    <section class="controls-container" aria-label="Study Options">
+      <!-- Direction Switcher -->
+      <div class="segmented-group" id="directionGroup" role="group" aria-label="Card Direction">
+        <button class="segmented-btn active" data-direction="state-first" id="dirStateFirst">
+          🏛️ State First
+        </button>
+        <button class="segmented-btn" data-direction="capital-first" id="dirCapitalFirst">
+          ⭐ Capital First
+        </button>
+        <button class="segmented-btn" data-direction="random" id="dirRandom">
+          🔀 Random
+        </button>
+      </div>
+
+      <!-- Filter Row & Order Switcher -->
+      <div class="filter-row">
+        <div class="deck-filter-pills" id="filterGroup" role="group" aria-label="Deck Filter">
+          <button class="filter-pill active" data-filter="all" id="filterAll">
+            All States (50)
+          </button>
+          <button class="filter-pill" data-filter="missed" id="filterMissed">
+            Missed Only (<span id="filterMissedCount">0</span>)
+          </button>
+        </div>
+        
+        <button class="order-toggle-btn" id="btnOrderToggle" title="Toggle card order">
+          <span id="orderIcon">🔀</span> <span id="orderLabel">Shuffled</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Flashcard Arena -->
+    <main class="card-arena" id="cardArena">
+      <div class="card-wrapper" id="cardWrapper" tabindex="0" role="region" aria-label="Interactive Flashcard">
+        
+        <!-- Interactive Swipe Badges (Visible during finger drag) -->
+        <div class="swipe-badge swipe-badge-missed" id="badgeMissed">PRACTICE ❌</div>
+        <div class="swipe-badge swipe-badge-gotit" id="badgeGotIt">GOT IT! ✅</div>
+
+        <!-- 3D Flippable Card -->
+        <div class="flashcard" id="flashcard">
+          <!-- Front Face -->
+          <div class="card-face card-front">
+            <div class="card-meta">
+              <span id="cardFrontMeta">QUESTION</span>
+              <div class="card-status-dot" id="cardFrontStatusDot" title="Card Status"></div>
+            </div>
+            <div class="card-content">
+              <span class="card-label" id="cardFrontLabel">US STATE</span>
+              <div class="card-title" id="cardFrontTitle">Alabama</div>
+            </div>
+            <div class="card-footer-hint">
+              <span>👆</span> Tap to flip for answer
+            </div>
+          </div>
+
+          <!-- Back Face -->
+          <div class="card-face card-back">
+            <div class="card-meta">
+              <span id="cardBackMeta">ANSWER</span>
+              <div class="card-status-dot" id="cardBackStatusDot" title="Card Status"></div>
+            </div>
+            <div class="card-content">
+              <span class="card-label" id="cardBackLabel">CAPITAL</span>
+              <div class="card-title" id="cardBackTitle">Montgomery</div>
+            </div>
+            <div class="card-footer-hint">
+              <span>👆</span> Tap to flip back
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty Deck Message (Shown when deck has 0 cards, e.g. Missed deck is empty) -->
+      <div class="deck-empty-view" id="deckEmptyView" style="display: none;">
+        <div class="empty-trophy">🎉</div>
+        <h2 id="emptyDeckTitle">All Done!</h2>
+        <p id="emptyDeckDesc">You have no missed cards in this deck. Great job mastering your states and capitals!</p>
+        <button class="btn-primary-action" id="btnEmptyAction">
+          Show All States
+        </button>
+      </div>
+    </main>
+
+    <!-- Action Buttons (Missed, Flip, Got It) -->
+    <div class="action-buttons-group" id="actionButtonsGroup">
+      <button class="btn-action btn-missed" id="btnMarkMissed" aria-label="Mark as Need Practice (Swipe Left)">
+        <span>❌ Need Practice</span>
+      </button>
+      <button class="btn-action btn-flip" id="btnFlipCard" aria-label="Flip Card">
+        <span>🔄 Flip</span>
+      </button>
+      <button class="btn-action btn-gotit" id="btnMarkKnown" aria-label="Mark as Got It (Swipe Right)">
+        <span>✅ Got It!</span>
+      </button>
+    </div>
+
+    <!-- Secondary Navigation (Prev / Counter / Next) -->
+    <div class="nav-row">
+      <button class="btn-nav" id="btnPrev" aria-label="Previous card">
+        <span>⏮</span> Prev
+      </button>
+      <div class="card-index-indicator" id="cardCounter">
+        Card 1 of 50
+      </div>
+      <button class="btn-nav" id="btnNext" aria-label="Next card">
+        Next <span>⏭</span>
+      </button>
+    </div>
+
+    <!-- Instructions / Touch Tips -->
+    <div class="instruction-box" id="instructionBox">
+      <span>👆 <strong>Tap card</strong> to flip</span>
+      <span>•</span>
+      <span>👈 <strong>Swipe left</strong>: Need Practice</span>
+      <span>•</span>
+      <span>👉 <strong>Swipe right</strong>: Got It!</span>
+    </div>
+
+  </div>
+
+  <!-- Reset Confirmation Modal -->
+  <div class="modal-backdrop" id="resetModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-content">
+      <h3 id="modalTitle">Reset Study Progress?</h3>
+      <p>This will clear all your "Got It" and "Need Practice" markings and return all 50 states to unreviewed status.</p>
+      <div class="modal-actions">
+        <button class="btn-nav" id="btnCancelReset">Cancel</button>
+        <button class="btn-action btn-missed" id="btnConfirmReset" style="min-height: 40px; padding: 0.5rem 1.2rem;">Reset All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic -->
+  <script src="data/states.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

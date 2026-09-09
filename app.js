@@ -326,6 +326,8 @@
     btnNext.disabled = currentIndex === deck.length - 1;
   }
 
+  let lastFlipTime = 0;
+
   // =========================================================================
   // Card Navigation & Action Handlers
   // =========================================================================
@@ -333,6 +335,8 @@
     if (deck.length === 0) return;
     isFlipped = !isFlipped;
     flashcard.classList.toggle('is-flipped', isFlipped);
+    flashcard.style.transform = '';
+    lastFlipTime = Date.now();
   }
 
   function nextCard() {
@@ -387,9 +391,6 @@
     currentTranslateY = 0;
     isDragging = true;
     isTouchMoved = false;
-
-    cardWrapper.classList.remove('is-animating');
-    cardWrapper.classList.add('is-dragging');
   }
 
   function onTouchMove(e) {
@@ -398,9 +399,13 @@
     const deltaX = touch.clientX - touchStartX;
     const deltaY = touch.clientY - touchStartY;
 
-    if (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) {
+    // Only engage dragging physics once user moves significantly (> 15px)
+    if (Math.abs(deltaX) > 15 || Math.abs(deltaY) > 15) {
       isTouchMoved = true;
+      cardWrapper.classList.add('is-dragging');
     }
+
+    if (!isTouchMoved) return;
 
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
       if (e.cancelable) e.preventDefault();
@@ -433,19 +438,19 @@
     if (!isDragging || deck.length === 0) return;
     isDragging = false;
     cardWrapper.classList.remove('is-dragging');
-    cardWrapper.classList.add('is-animating');
 
     badgeGotIt.style.opacity = 0;
     badgeMissed.style.opacity = 0;
 
-    const threshold = 75;
+    const threshold = 65;
 
     if (currentTranslateX > threshold) {
       markCard('known');
     } else if (currentTranslateX < -threshold) {
       markCard('missed');
     } else {
-      if (!isTouchMoved || (Math.abs(currentTranslateX) < 10 && Math.abs(currentTranslateY) < 10)) {
+      // If it was a tap or release before full swipe threshold
+      if (!isTouchMoved || Math.abs(currentTranslateX) < 25) {
         toggleCardFlip();
       }
       resetCardTransforms();
@@ -468,7 +473,7 @@
 
   function resetCardTransforms() {
     cardWrapper.classList.remove('is-animating', 'is-dragging');
-    flashcard.style.transform = isFlipped ? 'rotateY(180deg)' : '';
+    flashcard.style.transform = '';
     flashcard.style.opacity = '1';
     badgeGotIt.style.opacity = 0;
     badgeMissed.style.opacity = 0;
@@ -480,12 +485,21 @@
   // Event Bindings
   // =========================================================================
   function bindEvents() {
-    // Touch & Mouse Drag on Flashcard
+    // Direct tap/click on card wrapper
+    cardWrapper.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return;
+      if (Date.now() - lastFlipTime > 250) {
+        toggleCardFlip();
+      }
+    });
+
+    // Touch Drag & Swipe on Flashcard
     cardWrapper.addEventListener('touchstart', onTouchStart, { passive: false });
     cardWrapper.addEventListener('touchmove', onTouchMove, { passive: false });
     cardWrapper.addEventListener('touchend', onTouchEnd, { passive: false });
     cardWrapper.addEventListener('touchcancel', onTouchEnd);
 
+    // Mouse drag support for desktop/trackpad
     cardWrapper.addEventListener('mousedown', onTouchStart);
     window.addEventListener('mousemove', e => {
       if (isDragging) onTouchMove(e);

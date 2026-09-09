@@ -1,6 +1,6 @@
 /**
  * US States & Capitals - Flashcard Study App
- * Main Controller & State Management
+ * Streamlined Hero Card Controller with Settings Sheet & Memory Hooks
  */
 
 (function () {
@@ -8,9 +8,9 @@
 
   // Local Storage Keys
   const STORAGE_KEY_PROGRESS = 'states_capitals_progress_v1';
-  const STORAGE_KEY_SETTINGS = 'states_capitals_settings_v1';
+  const STORAGE_KEY_SETTINGS = 'states_capitals_settings_v2';
 
-  // DOM Elements
+  // DOM Elements - Main UI
   const cardWrapper = document.getElementById('cardWrapper');
   const flashcard = document.getElementById('flashcard');
   const badgeMissed = document.getElementById('badgeMissed');
@@ -25,6 +25,9 @@
   const cardBackLabel = document.getElementById('cardBackLabel');
   const cardBackTitle = document.getElementById('cardBackTitle');
   const cardBackStatusDot = document.getElementById('cardBackStatusDot');
+  const cardHookBox = document.getElementById('cardHookBox');
+  const hookQuote = document.getElementById('hookQuote');
+  const hookKey = document.getElementById('hookKey');
 
   const cardCounter = document.getElementById('cardCounter');
   const deckEmptyView = document.getElementById('deckEmptyView');
@@ -39,21 +42,26 @@
   const btnMarkMissed = document.getElementById('btnMarkMissed');
   const btnMarkKnown = document.getElementById('btnMarkKnown');
 
-  const statKnownCount = document.getElementById('statKnownCount');
-  const statMissedCount = document.getElementById('statMissedCount');
-  const statRemainingCount = document.getElementById('statRemainingCount');
-  const masteryPercentText = document.getElementById('masteryPercentText');
+  const headerMasteredCount = document.getElementById('headerMasteredCount');
+  const headerMasteredPercent = document.getElementById('headerMasteredPercent');
   const progressBarKnown = document.getElementById('progressBarKnown');
   const progressBarMissed = document.getElementById('progressBarMissed');
+  const activeDeckBadge = document.getElementById('activeDeckBadge');
+  const activeStatsBadge = document.getElementById('activeStatsBadge');
 
-  const directionGroup = document.getElementById('directionGroup');
-  const filterGroup = document.getElementById('filterGroup');
-  const filterMissedCount = document.getElementById('filterMissedCount');
-  const btnOrderToggle = document.getElementById('btnOrderToggle');
-  const orderIcon = document.getElementById('orderIcon');
-  const orderLabel = document.getElementById('orderLabel');
+  // DOM Elements - Settings Modal
+  const btnOpenSettings = document.getElementById('btnOpenSettings');
+  const settingsModal = document.getElementById('settingsModal');
+  const btnCloseSettings = document.getElementById('btnCloseSettings');
+  const btnDoneSettings = document.getElementById('btnDoneSettings');
+  const settingDirectionGroup = document.getElementById('settingDirectionGroup');
+  const settingFilterGroup = document.getElementById('settingFilterGroup');
+  const settingOrderGroup = document.getElementById('settingOrderGroup');
+  const settingsMissedCount = document.getElementById('settingsMissedCount');
+  const toggleHints = document.getElementById('toggleHints');
+  const btnTriggerReset = document.getElementById('btnTriggerReset');
 
-  const btnReset = document.getElementById('btnReset');
+  // DOM Elements - Reset Modal
   const resetModal = document.getElementById('resetModal');
   const btnCancelReset = document.getElementById('btnCancelReset');
   const btnConfirmReset = document.getElementById('btnConfirmReset');
@@ -64,7 +72,7 @@
   let deck = [];
   let currentIndex = 0;
   let isFlipped = false;
-  let cardDirectionCache = {}; // Cache per-card random direction
+  let cardDirectionCache = {};
 
   // Swipe & Touch variables
   let touchStartX = 0;
@@ -79,7 +87,7 @@
 
   function init() {
     buildDeck();
-    updateControlsUI();
+    syncSettingsUI();
     renderStats();
     renderCurrentCard();
     bindEvents();
@@ -113,10 +121,16 @@
       return data ? JSON.parse(data) : {
         direction: 'state-first',
         filter: 'all',
-        order: 'shuffle'
+        order: 'shuffle',
+        hintsEnabled: true
       };
     } catch (e) {
-      return { direction: 'state-first', filter: 'all', order: 'shuffle' };
+      return {
+        direction: 'state-first',
+        filter: 'all',
+        order: 'shuffle',
+        hintsEnabled: true
+      };
     }
   }
 
@@ -160,7 +174,7 @@
   }
 
   // =========================================================================
-  // UI Rendering
+  // UI Rendering & Stats
   // =========================================================================
   function renderStats() {
     let known = 0;
@@ -176,44 +190,49 @@
     const remaining = total - known - missed;
     const masteryPercent = Math.round((known / total) * 100);
 
-    statKnownCount.textContent = known;
-    statMissedCount.textContent = missed;
-    statRemainingCount.textContent = remaining;
-    filterMissedCount.textContent = missed;
+    headerMasteredCount.textContent = known;
+    headerMasteredPercent.textContent = `${masteryPercent}%`;
+    settingsMissedCount.textContent = missed;
 
-    masteryPercentText.textContent = `${masteryPercent}% Mastered`;
     progressBarKnown.style.width = `${(known / total) * 100}%`;
     progressBarMissed.style.width = `${(missed / total) * 100}%`;
+
+    // Active Indicator Badge Text
+    const deckName = settings.filter === 'missed' ? 'Missed Only' : 'All 50 States';
+    let dirName = 'State First';
+    if (settings.direction === 'capital-first') dirName = 'Capital First';
+    if (settings.direction === 'random') dirName = 'Random Mix';
+    
+    activeDeckBadge.textContent = `${deckName} • ${dirName}`;
+    activeStatsBadge.textContent = `❌ ${missed} Missed • ${remaining} Left`;
   }
 
-  function updateControlsUI() {
-    // Direction segmented control
-    directionGroup.querySelectorAll('.segmented-btn').forEach(btn => {
+  function syncSettingsUI() {
+    // Direction
+    settingDirectionGroup.querySelectorAll('.segmented-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.direction === settings.direction);
     });
 
-    // Filter pills
-    filterGroup.querySelectorAll('.filter-pill').forEach(pill => {
-      pill.classList.toggle('active', pill.dataset.filter === settings.filter);
+    // Filter
+    settingFilterGroup.querySelectorAll('.segmented-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filter === settings.filter);
     });
 
-    // Order toggle
-    if (settings.order === 'shuffle') {
-      orderIcon.textContent = '🔀';
-      orderLabel.textContent = 'Shuffled';
-    } else {
-      orderIcon.textContent = '🔤';
-      orderLabel.textContent = 'A to Z';
-    }
+    // Order
+    settingOrderGroup.querySelectorAll('.segmented-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.order === settings.order);
+    });
+
+    // Hints
+    toggleHints.checked = settings.hintsEnabled !== false;
   }
 
   function renderCurrentCard() {
-    // Reset flip state on new card
     isFlipped = false;
     flashcard.classList.remove('is-flipped');
     resetCardTransforms();
 
-    // Handle Empty Deck View
+    // Handle Empty Deck
     if (!deck || deck.length === 0) {
       cardWrapper.style.display = 'none';
       actionButtonsGroup.style.display = 'none';
@@ -241,7 +260,7 @@
       return;
     }
 
-    // Ensure within bounds
+    // Bounds Check
     if (currentIndex >= deck.length) {
       currentIndex = 0;
     } else if (currentIndex < 0) {
@@ -255,7 +274,7 @@
     const item = deck[currentIndex];
     const status = progress[item.state] || 'unseen';
 
-    // Determine card side layout (State First vs Capital First vs Random)
+    // Determine Side Orientation
     let isStateOnFront = true;
     if (settings.direction === 'capital-first') {
       isStateOnFront = false;
@@ -266,7 +285,7 @@
       isStateOnFront = cardDirectionCache[item.id];
     }
 
-    // Set Front Side
+    // Set Front & Back Text
     if (isStateOnFront) {
       cardFrontMeta.textContent = 'QUESTION (STATE)';
       cardFrontLabel.textContent = 'US STATE';
@@ -285,6 +304,15 @@
       cardBackTitle.textContent = item.state;
     }
 
+    // Render Memory Hook Callout on Back
+    if (settings.hintsEnabled !== false && item.hook) {
+      cardHookBox.style.display = 'flex';
+      hookQuote.textContent = `"${item.hook}"`;
+      hookKey.textContent = item.key || '';
+    } else {
+      cardHookBox.style.display = 'none';
+    }
+
     // Update Status Dots
     [cardFrontStatusDot, cardBackStatusDot].forEach(dot => {
       dot.className = 'card-status-dot';
@@ -299,7 +327,7 @@
   }
 
   // =========================================================================
-  // Interactions & Card Navigation
+  // Card Navigation & Action Handlers
   // =========================================================================
   function toggleCardFlip() {
     if (deck.length === 0) return;
@@ -312,7 +340,6 @@
       currentIndex++;
       renderCurrentCard();
     } else {
-      // Reached the end of deck
       renderCurrentCard();
     }
   }
@@ -331,10 +358,8 @@
     saveProgress();
     renderStats();
 
-    // Trigger smooth exit animation
     animateCardExit(status === 'known' ? 1 : -1, () => {
       if (settings.filter === 'missed' && status === 'known') {
-        // If in "Missed Only" mode and card is now known, remove it from the deck
         deck.splice(currentIndex, 1);
         if (currentIndex >= deck.length && deck.length > 0) {
           currentIndex = deck.length - 1;
@@ -343,7 +368,6 @@
         if (currentIndex < deck.length - 1) {
           currentIndex++;
         } else {
-          // Wrapped or finished
           currentIndex = 0;
         }
       }
@@ -352,7 +376,7 @@
   }
 
   // =========================================================================
-  // Swipe Gestures & Touch Engine (iPad & Touch Screen Support)
+  // Swipe Gestures & Touch Engine (iPad & Mobile Support)
   // =========================================================================
   function onTouchStart(e) {
     if (deck.length === 0) return;
@@ -374,24 +398,23 @@
     const deltaX = touch.clientX - touchStartX;
     const deltaY = touch.clientY - touchStartY;
 
-    // Check if horizontal movement is dominant
     if (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) {
       isTouchMoved = true;
     }
 
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
-      if (e.cancelable) e.preventDefault(); // Prevent page scrolling during card drag
+      if (e.cancelable) e.preventDefault();
     }
 
     currentTranslateX = deltaX;
-    currentTranslateY = deltaY * 0.2; // subtle vertical follow
+    currentTranslateY = deltaY * 0.2;
 
     const rotation = deltaX * 0.04;
     const flipRotation = isFlipped ? 'rotateY(180deg)' : '';
 
     flashcard.style.transform = `${flipRotation} translate3d(${currentTranslateX}px, ${currentTranslateY}px, 0) rotate(${rotation}deg)`;
 
-    // Dynamic Swipe Badges Opacity
+    // Badges Opacity
     if (deltaX > 25) {
       const opacity = Math.min(1, (deltaX - 25) / 90);
       badgeGotIt.style.opacity = opacity;
@@ -415,16 +438,13 @@
     badgeGotIt.style.opacity = 0;
     badgeMissed.style.opacity = 0;
 
-    const threshold = 75; // Drag threshold in px to register swipe
+    const threshold = 75;
 
     if (currentTranslateX > threshold) {
-      // Swiped Right -> Got It!
       markCard('known');
     } else if (currentTranslateX < -threshold) {
-      // Swiped Left -> Need Practice
       markCard('missed');
     } else {
-      // Insufficient drag -> Tap to flip or spring back
       if (!isTouchMoved || (Math.abs(currentTranslateX) < 10 && Math.abs(currentTranslateY) < 10)) {
         toggleCardFlip();
       }
@@ -437,7 +457,7 @@
     const throwDistance = direction * (window.innerWidth || 500);
     const flipRotation = isFlipped ? 'rotateY(180deg)' : '';
 
-    flashcard.style.transform = `${flipRotation} translate3d(${throwDistance}px, 0, 0) rotate(${direction * 22}deg)`;
+    flashcard.style.transform = `${flipRotation} translate3d(${throwDistance}px, 0, 0) rotate(${direction * 20}deg)`;
     flashcard.style.opacity = '0';
 
     setTimeout(() => {
@@ -457,10 +477,10 @@
   }
 
   // =========================================================================
-  // Event Listeners
+  // Event Bindings
   // =========================================================================
   function bindEvents() {
-    // Touch & Mouse Swipes on Card Arena
+    // Touch & Mouse Drag on Flashcard
     cardWrapper.addEventListener('touchstart', onTouchStart, { passive: false });
     cardWrapper.addEventListener('touchmove', onTouchMove, { passive: false });
     cardWrapper.addEventListener('touchend', onTouchEnd, { passive: false });
@@ -483,47 +503,73 @@
     btnPrev.addEventListener('click', prevCard);
     btnNext.addEventListener('click', nextCard);
 
-    // Direction Mode Buttons
-    directionGroup.addEventListener('click', e => {
-      const btn = e.target.closest('.segmented-btn');
-      if (!btn) return;
-      settings.direction = btn.dataset.direction;
-      saveSettings();
-      updateControlsUI();
-      renderCurrentCard();
-    });
-
-    // Filter Pills
-    filterGroup.addEventListener('click', e => {
-      const pill = e.target.closest('.filter-pill');
-      if (!pill) return;
-      settings.filter = pill.dataset.filter;
-      saveSettings();
-      updateControlsUI();
-      buildDeck();
-      renderCurrentCard();
-    });
-
-    // Order Toggle
-    btnOrderToggle.addEventListener('click', () => {
-      settings.order = settings.order === 'shuffle' ? 'alpha' : 'shuffle';
-      saveSettings();
-      updateControlsUI();
-      buildDeck();
-      renderCurrentCard();
-    });
-
     // Empty Deck Action Button
     btnEmptyAction.addEventListener('click', () => {
       settings.filter = 'all';
       saveSettings();
-      updateControlsUI();
+      syncSettingsUI();
+      buildDeck();
+      renderStats();
+      renderCurrentCard();
+    });
+
+    // Settings Modal Open / Close
+    btnOpenSettings.addEventListener('click', () => {
+      syncSettingsUI();
+      settingsModal.classList.add('is-open');
+    });
+
+    const closeSettings = () => settingsModal.classList.remove('is-open');
+    btnCloseSettings.addEventListener('click', closeSettings);
+    btnDoneSettings.addEventListener('click', closeSettings);
+    settingsModal.addEventListener('click', e => {
+      if (e.target === settingsModal) closeSettings();
+    });
+
+    // Setting: Direction
+    settingDirectionGroup.addEventListener('click', e => {
+      const btn = e.target.closest('.segmented-btn');
+      if (!btn) return;
+      settings.direction = btn.dataset.direction;
+      saveSettings();
+      syncSettingsUI();
+      renderStats();
+      renderCurrentCard();
+    });
+
+    // Setting: Filter
+    settingFilterGroup.addEventListener('click', e => {
+      const btn = e.target.closest('.segmented-btn');
+      if (!btn) return;
+      settings.filter = btn.dataset.filter;
+      saveSettings();
+      syncSettingsUI();
+      buildDeck();
+      renderStats();
+      renderCurrentCard();
+    });
+
+    // Setting: Order
+    settingOrderGroup.addEventListener('click', e => {
+      const btn = e.target.closest('.segmented-btn');
+      if (!btn) return;
+      settings.order = btn.dataset.order;
+      saveSettings();
+      syncSettingsUI();
       buildDeck();
       renderCurrentCard();
     });
 
-    // Reset Modal Dialog
-    btnReset.addEventListener('click', () => {
+    // Setting: Memory Hints Toggle
+    toggleHints.addEventListener('change', () => {
+      settings.hintsEnabled = toggleHints.checked;
+      saveSettings();
+      renderCurrentCard();
+    });
+
+    // Trigger Reset from Settings
+    btnTriggerReset.addEventListener('click', () => {
+      settingsModal.classList.remove('is-open');
       resetModal.classList.add('is-open');
     });
 
@@ -541,14 +587,12 @@
     });
 
     resetModal.addEventListener('click', e => {
-      if (e.target === resetModal) {
-        resetModal.classList.remove('is-open');
-      }
+      if (e.target === resetModal) resetModal.classList.remove('is-open');
     });
 
-    // Keyboard Shortcuts (Space to flip, Arrows for Missed/Known/Prev/Next)
+    // Keyboard Shortcuts (Magic Keyboard / Desktop)
     window.addEventListener('keydown', e => {
-      if (resetModal.classList.contains('is-open')) return;
+      if (settingsModal.classList.contains('is-open') || resetModal.classList.contains('is-open')) return;
 
       if (e.code === 'Space') {
         e.preventDefault();

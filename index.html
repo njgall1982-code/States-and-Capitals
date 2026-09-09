@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0b0f19">
-  <meta name="description" content="Interactive 3D flashcards app for mastering all 50 US States and Capitals with progress tracking, iPad touch gestures, and practice filters.">
+  <meta name="description" content="Interactive hero 3D flashcards app for mastering all 50 US States and Capitals with progress tracking, iPad touch gestures, and kid-safe memory hooks.">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="States & Capitals">
   
   <title>US States & Capitals - Flashcard Study App</title>
   
-  <!-- Web Manifest for iPad PWA Installation -->
+  <!-- Web Manifest & Icons for iPad PWA -->
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -27,87 +27,50 @@
 
   <div class="app-container">
     
-    <!-- Top Header -->
+    <!-- Minimal Streamlined Header -->
     <header class="app-header">
       <div class="brand">
         <div class="brand-icon" aria-hidden="true">🇺🇸</div>
         <div class="brand-title">
           <h1>States & Capitals</h1>
-          <p>Flashcard Mastery Study App</p>
         </div>
       </div>
-      <div class="header-actions">
-        <button id="btnReset" class="btn-icon-secondary" title="Reset Study Progress" aria-label="Reset Study Progress">
-          🔄
+      <div class="header-right">
+        <div class="header-stats-pill" id="headerStatsPill" title="Study Progress">
+          ✅ <span class="pill-mastered" id="headerMasteredCount">0</span>/50
+          <span style="color: var(--text-subtle);">•</span>
+          <span id="headerMasteredPercent">0%</span>
+        </div>
+        <button id="btnOpenSettings" class="btn-settings-toggle" title="Study Settings" aria-label="Open Study Settings">
+          ⚙️
         </button>
       </div>
     </header>
 
-    <!-- Progress & Study Stats Card -->
-    <section class="stats-card" aria-label="Study Progress">
-      <div class="stats-summary">
-        <div class="stats-badges">
-          <span class="stat-badge known" id="statBadgeKnown" title="Cards marked as Got It">
-            ✅ <span id="statKnownCount">0</span> Mastered
-          </span>
-          <span class="stat-badge missed" id="statBadgeMissed" title="Cards marked as Need Practice">
-            ❌ <span id="statMissedCount">0</span> Need Practice
-          </span>
-          <span class="stat-badge remaining" id="statBadgeRemaining" title="Unseen cards in deck">
-            ⚪ <span id="statRemainingCount">50</span> Left
-          </span>
-        </div>
-        <div class="card-index-indicator" id="masteryPercentText">0%</div>
-      </div>
-      <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Mastery Progress">
+    <!-- Global Slim Progress Track & Mode Indicator -->
+    <div class="progress-container">
+      <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
         <div class="progress-bar-known" id="progressBarKnown" style="width: 0%"></div>
         <div class="progress-bar-missed" id="progressBarMissed" style="width: 0%"></div>
       </div>
-    </section>
-
-    <!-- Study Controls (Direction, Deck Filters, Shuffle) -->
-    <section class="controls-container" aria-label="Study Options">
-      <!-- Direction Switcher -->
-      <div class="segmented-group" id="directionGroup" role="group" aria-label="Card Direction">
-        <button class="segmented-btn active" data-direction="state-first" id="dirStateFirst">
-          🏛️ State First
-        </button>
-        <button class="segmented-btn" data-direction="capital-first" id="dirCapitalFirst">
-          ⭐ Capital First
-        </button>
-        <button class="segmented-btn" data-direction="random" id="dirRandom">
-          🔀 Random
-        </button>
+      <div class="active-deck-indicator">
+        <span class="badge-mode" id="activeDeckBadge">All 50 States • State First</span>
+        <span id="activeStatsBadge">❌ 0 Missed • 50 Left</span>
       </div>
+    </div>
 
-      <!-- Filter Row & Order Switcher -->
-      <div class="filter-row">
-        <div class="deck-filter-pills" id="filterGroup" role="group" aria-label="Deck Filter">
-          <button class="filter-pill active" data-filter="all" id="filterAll">
-            All States (50)
-          </button>
-          <button class="filter-pill" data-filter="missed" id="filterMissed">
-            Missed Only (<span id="filterMissedCount">0</span>)
-          </button>
-        </div>
-        
-        <button class="order-toggle-btn" id="btnOrderToggle" title="Toggle card order">
-          <span id="orderIcon">🔀</span> <span id="orderLabel">Shuffled</span>
-        </button>
-      </div>
-    </section>
-
-    <!-- Flashcard Arena -->
+    <!-- Hero Flashcard Arena (Expanded for iPad Screen Real Estate) -->
     <main class="card-arena" id="cardArena">
       <div class="card-wrapper" id="cardWrapper" tabindex="0" role="region" aria-label="Interactive Flashcard">
         
-        <!-- Interactive Swipe Badges (Visible during finger drag) -->
+        <!-- Interactive Swipe Badges -->
         <div class="swipe-badge swipe-badge-missed" id="badgeMissed">PRACTICE ❌</div>
         <div class="swipe-badge swipe-badge-gotit" id="badgeGotIt">GOT IT! ✅</div>
 
-        <!-- 3D Flippable Card -->
+        <!-- 3D Flippable Hero Card -->
         <div class="flashcard" id="flashcard">
-          <!-- Front Face -->
+          
+          <!-- Front Face (Question) -->
           <div class="card-face card-front">
             <div class="card-meta">
               <span id="cardFrontMeta">QUESTION</span>
@@ -118,11 +81,11 @@
               <div class="card-title" id="cardFrontTitle">Alabama</div>
             </div>
             <div class="card-footer-hint">
-              <span>👆</span> Tap to flip for answer
+              <span>👆</span> Tap or Space to flip
             </div>
           </div>
 
-          <!-- Back Face -->
+          <!-- Back Face (Answer + Optional Memory Hook) -->
           <div class="card-face card-back">
             <div class="card-meta">
               <span id="cardBackMeta">ANSWER</span>
@@ -131,15 +94,29 @@
             <div class="card-content">
               <span class="card-label" id="cardBackLabel">CAPITAL</span>
               <div class="card-title" id="cardBackTitle">Montgomery</div>
+              
+              <!-- Embedded Memory Hook Callout -->
+              <div class="card-hook-box" id="cardHookBox">
+                <div class="hook-header">
+                  <span>💡</span> Memory Hook
+                </div>
+                <div class="hook-quote" id="hookQuote">
+                  "A llama in a gum tree"
+                </div>
+                <div class="hook-key" id="hookKey">
+                  Ala-llama → Mount-gum-tree
+                </div>
+              </div>
             </div>
             <div class="card-footer-hint">
-              <span>👆</span> Tap to flip back
+              <span>👆</span> Tap or Space to flip back
             </div>
           </div>
+
         </div>
       </div>
 
-      <!-- Empty Deck Message (Shown when deck has 0 cards, e.g. Missed deck is empty) -->
+      <!-- Empty Deck State -->
       <div class="deck-empty-view" id="deckEmptyView" style="display: none;">
         <div class="empty-trophy">🎉</div>
         <h2 id="emptyDeckTitle">All Done!</h2>
@@ -150,7 +127,7 @@
       </div>
     </main>
 
-    <!-- Action Buttons (Missed, Flip, Got It) -->
+    <!-- Large Touch Action Buttons -->
     <div class="action-buttons-group" id="actionButtonsGroup">
       <button class="btn-action btn-missed" id="btnMarkMissed" aria-label="Mark as Need Practice (Swipe Left)">
         <span>❌ Need Practice</span>
@@ -163,7 +140,7 @@
       </button>
     </div>
 
-    <!-- Secondary Navigation (Prev / Counter / Next) -->
+    <!-- Secondary Navigation -->
     <div class="nav-row">
       <button class="btn-nav" id="btnPrev" aria-label="Previous card">
         <span>⏮</span> Prev
@@ -176,30 +153,92 @@
       </button>
     </div>
 
-    <!-- Instructions / Touch Tips -->
-    <div class="instruction-box" id="instructionBox">
-      <span>👆 <strong>Tap card</strong> to flip</span>
+    <!-- Quick Instructions Bar -->
+    <div class="instruction-box">
+      <span>👆 <strong>Tap</strong> to flip</span>
       <span>•</span>
-      <span>👈 <strong>Swipe left</strong>: Need Practice</span>
+      <span>👈 <strong>Swipe Left</strong>: Need Practice</span>
       <span>•</span>
-      <span>👉 <strong>Swipe right</strong>: Got It!</span>
+      <span>👉 <strong>Swipe Right</strong>: Got It!</span>
     </div>
 
+  </div>
+
+  <!-- Settings Modal Sheet (Houses all controls cleanly) -->
+  <div class="modal-backdrop" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsSheetTitle">
+    <div class="settings-sheet">
+      <div class="sheet-header">
+        <h2 id="settingsSheetTitle">⚙️ Study Settings</h2>
+        <button class="btn-close-sheet" id="btnCloseSettings" aria-label="Close Settings">✕</button>
+      </div>
+
+      <!-- Setting 1: Card Direction -->
+      <div class="setting-group">
+        <span class="setting-label">Card Direction</span>
+        <div class="segmented-group" id="settingDirectionGroup">
+          <button class="segmented-btn active" data-direction="state-first">🏛️ State First</button>
+          <button class="segmented-btn" data-direction="capital-first">⭐ Capital First</button>
+          <button class="segmented-btn" data-direction="random">🔀 Random</button>
+        </div>
+      </div>
+
+      <!-- Setting 2: Deck Filter -->
+      <div class="setting-group">
+        <span class="setting-label">Study Deck</span>
+        <div class="segmented-group" id="settingFilterGroup">
+          <button class="segmented-btn active" data-filter="all">All States (50)</button>
+          <button class="segmented-btn" data-filter="missed">Missed Only (<span id="settingsMissedCount">0</span>)</button>
+        </div>
+      </div>
+
+      <!-- Setting 3: Card Order -->
+      <div class="setting-group">
+        <span class="setting-label">Card Ordering</span>
+        <div class="segmented-group" id="settingOrderGroup">
+          <button class="segmented-btn active" data-order="shuffle">🔀 Shuffled</button>
+          <button class="segmented-btn" data-order="alpha">🔤 Alphabetical (A-Z)</button>
+        </div>
+      </div>
+
+      <!-- Setting 4: Memory Hints Mode Toggle -->
+      <div class="setting-switch-row">
+        <div class="switch-label-group">
+          <span class="switch-title">💡 Memory Hooks</span>
+          <span class="switch-subtitle">Show kid-safe mnemonic hook on card back</span>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggleHints" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <!-- Setting 5: Reset Progress -->
+      <div class="setting-group" style="margin-top: 0.5rem;">
+        <span class="setting-label">Data & Progress</span>
+        <button class="btn-danger-block" id="btnTriggerReset">
+          🔄 Reset All Study Progress
+        </button>
+      </div>
+
+      <button class="btn-primary-action" id="btnDoneSettings" style="width: 100%; justify-content: center; margin-top: 0.5rem;">
+        Done
+      </button>
+    </div>
   </div>
 
   <!-- Reset Confirmation Modal -->
   <div class="modal-backdrop" id="resetModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-content">
+    <div class="confirm-modal-content">
       <h3 id="modalTitle">Reset Study Progress?</h3>
-      <p>This will clear all your "Got It" and "Need Practice" markings and return all 50 states to unreviewed status.</p>
-      <div class="modal-actions">
+      <p>This will clear all your "Got It" and "Need Practice" marks and return all 50 states to unreviewed status.</p>
+      <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 0.75rem;">
         <button class="btn-nav" id="btnCancelReset">Cancel</button>
-        <button class="btn-action btn-missed" id="btnConfirmReset" style="min-height: 40px; padding: 0.5rem 1.2rem;">Reset All</button>
+        <button class="btn-action btn-missed" id="btnConfirmReset" style="min-height: 42px; padding: 0.5rem 1.2rem;">Reset All</button>
       </div>
     </div>
   </div>
 
-  <!-- Application Logic -->
+  <!-- Scripts -->
   <script src="data/states.js"></script>
   <script src="app.js"></script>
 </body>

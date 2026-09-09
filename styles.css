@@ -1,6 +1,6 @@
 /* ==========================================================================
    US States & Capitals Study App - Core Styles
-   Modern, iPad-optimized, touch-first flashcard design system
+   Modern, iPad-optimized, hero-card focused layout with Settings Drawer
    ========================================================================== */
 
 :root {
@@ -8,12 +8,12 @@
   --bg-primary: #0b0f19;
   --bg-secondary: #131b2e;
   --bg-card: #1a233d;
-  --bg-card-front: linear-gradient(145deg, #1e294b 0%, #151d36 100%);
-  --bg-card-back: linear-gradient(145deg, #182245 0%, #0f162e 100%);
-  --bg-glass: rgba(26, 35, 61, 0.7);
+  --bg-card-front: linear-gradient(150deg, #1e294b 0%, #131b33 100%);
+  --bg-card-back: linear-gradient(150deg, #182245 0%, #0f162e 100%);
+  --bg-glass: rgba(26, 35, 61, 0.75);
   
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(99, 102, 241, 0.4);
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-active: rgba(99, 102, 241, 0.45);
   
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
@@ -21,7 +21,7 @@
   
   --accent-brand: #6366f1;
   --accent-brand-hover: #4f46e5;
-  --accent-brand-glow: rgba(99, 102, 241, 0.25);
+  --accent-brand-glow: rgba(99, 102, 241, 0.3);
   
   --color-success: #10b981;
   --color-success-bg: rgba(16, 185, 129, 0.15);
@@ -33,7 +33,9 @@
   --color-danger-border: rgba(244, 63, 94, 0.4);
   --color-danger-glow: rgba(244, 63, 94, 0.3);
 
-  --color-warning: #f59e0b;
+  --color-amber: #f59e0b;
+  --color-amber-bg: rgba(245, 158, 11, 0.12);
+  --color-amber-border: rgba(245, 158, 11, 0.3);
   
   --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --radius-sm: 10px;
@@ -41,12 +43,12 @@
   --radius-lg: 24px;
   --radius-xl: 32px;
   
-  --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 1px 1px var(--border-subtle);
+  --shadow-card: 0 25px 50px -15px rgba(0, 0, 0, 0.6), 0 0 1px 1px var(--border-subtle);
   --shadow-elevated: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
   --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Base Reset & Box Sizing */
+/* Base Reset */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -59,7 +61,7 @@ html, body {
   min-height: 100%;
   background-color: var(--bg-primary);
   background-image: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.14) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
     radial-gradient(at 50% 50%, rgba(244, 63, 94, 0.05) 0px, transparent 60%);
   color: var(--text-main);
@@ -84,18 +86,17 @@ body {
   max-width: 680px;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.2rem;
   margin: 0 auto;
 }
 
 /* ==========================================================================
-   Header & Brand
+   Minimal Streamlined Header
    ========================================================================== */
 .app-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
   gap: 0.75rem;
 }
 
@@ -106,254 +107,133 @@ body {
 }
 
 .brand-icon {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-md);
   background: linear-gradient(135deg, var(--accent-brand) 0%, #a855f7 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   box-shadow: 0 4px 12px var(--accent-brand-glow);
 }
 
 .brand-title h1 {
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  background: linear-gradient(to right, #ffffff, #cbd5e1);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #ffffff;
 }
 
-.brand-title p {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.header-actions {
+.header-right {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
-.btn-icon-secondary {
+.header-stats-pill {
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
-  width: 40px;
-  height: 40px;
+  border-radius: 20px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.header-stats-pill .pill-mastered {
+  color: var(--color-success);
+}
+
+.btn-settings-toggle {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  width: 42px;
+  height: 42px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   transition: var(--transition-smooth);
 }
 
-.btn-icon-secondary:hover, .btn-icon-secondary:active {
-  color: var(--text-main);
+.btn-settings-toggle:hover, .btn-settings-toggle:active {
   background: rgba(255, 255, 255, 0.08);
   border-color: var(--border-active);
+  transform: rotate(30deg);
 }
 
-/* ==========================================================================
-   Progress & Stats Bar
-   ========================================================================== */
-.stats-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 1rem 1.25rem;
-  box-shadow: var(--shadow-elevated);
-  backdrop-filter: blur(12px);
+/* Slim Global Progress Track */
+.progress-container {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-}
-
-.stats-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.85rem;
-}
-
-.stats-badges {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
-
-.stat-badge {
-  display: inline-flex;
-  align-items: center;
   gap: 0.35rem;
-  padding: 0.3rem 0.65rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.stat-badge.known {
-  background: var(--color-success-bg);
-  color: var(--color-success);
-  border: 1px solid var(--color-success-border);
-}
-
-.stat-badge.missed {
-  background: var(--color-danger-bg);
-  color: var(--color-danger);
-  border: 1px solid var(--color-danger-border);
-}
-
-.stat-badge.remaining {
-  background: rgba(148, 163, 184, 0.1);
-  color: var(--text-muted);
-  border: 1px solid var(--border-subtle);
 }
 
 .progress-track {
   width: 100%;
-  height: 8px;
+  height: 6px;
   background: rgba(255, 255, 255, 0.06);
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
-  position: relative;
   display: flex;
 }
 
 .progress-bar-known {
   height: 100%;
   background: linear-gradient(90deg, #10b981, #34d399);
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.35s ease;
 }
 
 .progress-bar-missed {
   height: 100%;
   background: linear-gradient(90deg, #f43f5e, #fb7185);
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.35s ease;
 }
 
-/* ==========================================================================
-   Controls Bar (Modes & Filters)
-   ========================================================================== */
-.controls-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.segmented-group {
-  display: flex;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 4px;
-  gap: 4px;
-}
-
-.segmented-btn {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-family: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  padding: 0.6rem 0.4rem;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: var(--transition-smooth);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  white-space: nowrap;
-}
-
-.segmented-btn.active {
-  background: var(--accent-brand);
-  color: #ffffff;
-  box-shadow: 0 4px 12px var(--accent-brand-glow);
-}
-
-.segmented-btn:not(.active):hover {
-  color: var(--text-main);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.filter-row {
+/* Active Mode Indicator Bar (Compact) */
+.active-deck-indicator {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
-}
-
-.deck-filter-pills {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.filter-pill {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
-  font-family: inherit;
   font-size: 0.8rem;
-  font-weight: 600;
-  padding: 0.45rem 0.85rem;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: var(--transition-smooth);
+  color: var(--text-muted);
+  padding: 0 0.25rem;
 }
 
-.filter-pill.active {
-  border-color: var(--accent-brand);
-  background: rgba(99, 102, 241, 0.15);
+.badge-mode {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.25);
   color: #c7d2fe;
-}
-
-.order-toggle-btn {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
-  font-family: inherit;
-  font-size: 0.8rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
-  padding: 0.45rem 0.85rem;
-  border-radius: 20px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  transition: var(--transition-smooth);
-}
-
-.order-toggle-btn:hover {
-  border-color: var(--border-active);
-  color: var(--text-main);
 }
 
 /* ==========================================================================
-   Flashcard Arena (3D Flip + Swipe Gestures)
+   Hero Flashcard Arena (Expanded for iPad Real Estate)
    ========================================================================== */
 .card-arena {
   width: 100%;
   position: relative;
   perspective: 1400px;
-  margin: 0.5rem 0;
+  margin: 0.4rem 0;
   display: flex;
   justify-content: center;
 }
 
 .card-wrapper {
   width: 100%;
-  max-width: 520px;
-  height: 340px;
+  max-width: 580px;
+  height: 390px; /* Hero height for iPad readability */
   position: relative;
   touch-action: pan-y;
   user-select: none;
@@ -361,7 +241,12 @@ body {
   cursor: pointer;
 }
 
-/* Card 3D Flip element */
+@media (min-width: 768px) {
+  .card-wrapper {
+    height: 420px; /* Expansive iPad hero card */
+  }
+}
+
 .flashcard {
   width: 100%;
   height: 100%;
@@ -375,9 +260,8 @@ body {
   transform: rotateY(180deg);
 }
 
-/* Smooth Drag / Swipe translation applied via inline style or CSS transition */
 .card-wrapper.is-dragging .flashcard {
-  transition: none; /* Instant tracking on finger touch */
+  transition: none;
 }
 
 .card-wrapper.is-animating .flashcard {
@@ -394,7 +278,7 @@ body {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   border-radius: var(--radius-xl);
-  padding: 2rem 1.75rem;
+  padding: 2.2rem 2rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -420,10 +304,10 @@ body {
 .card-back {
   background: var(--bg-card-back);
   transform: rotateY(180deg);
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.35);
 }
 
-/* Card Decorative / Indicator Header */
+/* Card Header Meta */
 .card-meta {
   width: 100%;
   display: flex;
@@ -437,45 +321,45 @@ body {
 }
 
 .card-status-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--text-subtle);
 }
 
 .card-status-dot.known {
   background: var(--color-success);
-  box-shadow: 0 0 8px var(--color-success);
+  box-shadow: 0 0 10px var(--color-success);
 }
 
 .card-status-dot.missed {
   background: var(--color-danger);
-  box-shadow: 0 0 8px var(--color-danger);
+  box-shadow: 0 0 10px var(--color-danger);
 }
 
-/* Card Main Text */
+/* Card Content */
 .card-content {
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   width: 100%;
 }
 
 .card-label {
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   color: var(--accent-brand);
 }
 
 .card-title {
-  font-size: 2.3rem;
+  font-size: 2.6rem;
   font-weight: 800;
-  line-height: 1.15;
+  line-height: 1.12;
   letter-spacing: -0.02em;
   color: #ffffff;
   word-break: break-word;
@@ -483,8 +367,55 @@ body {
 
 @media (min-width: 640px) {
   .card-title {
-    font-size: 2.8rem;
+    font-size: 3.2rem;
   }
+}
+
+/* Memory Hook Callout (Embedded cleanly on card back) */
+.card-hook-box {
+  background: var(--color-amber-bg);
+  border: 1px solid var(--color-amber-border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.15rem;
+  max-width: 440px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.08);
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hook-header {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 800;
+  color: var(--color-amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.hook-quote {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.35;
+}
+
+.hook-key {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fcd34d;
+  opacity: 0.9;
 }
 
 /* Card Footer Hint */
@@ -492,22 +423,18 @@ body {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: var(--text-subtle);
   font-weight: 500;
 }
 
-.card-footer-hint span {
-  font-size: 1rem;
-}
-
-/* Swipe Badges (Visual Overlays during drag) */
+/* Swipe Badges */
 .swipe-badge {
   position: absolute;
-  top: 1.5rem;
-  padding: 0.5rem 1.25rem;
+  top: 1.75rem;
+  padding: 0.6rem 1.4rem;
   border-radius: var(--radius-md);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -518,37 +445,37 @@ body {
 }
 
 .swipe-badge-gotit {
-  right: 1.5rem;
+  right: 1.75rem;
   color: var(--color-success);
   border: 2.5px solid var(--color-success);
   background: rgba(16, 185, 129, 0.25);
-  box-shadow: 0 0 20px var(--color-success-glow);
+  box-shadow: 0 0 22px var(--color-success-glow);
   transform: rotate(12deg);
 }
 
 .swipe-badge-missed {
-  left: 1.5rem;
+  left: 1.75rem;
   color: var(--color-danger);
   border: 2.5px solid var(--color-danger);
   background: rgba(244, 63, 94, 0.25);
-  box-shadow: 0 0 20px var(--color-danger-glow);
+  box-shadow: 0 0 22px var(--color-danger-glow);
   transform: rotate(-12deg);
 }
 
 /* ==========================================================================
-   Interactive Action Buttons
+   Action Buttons (Large iPad Touch Ergonomics)
    ========================================================================== */
 .action-buttons-group {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
+  gap: 0.85rem;
   width: 100%;
 }
 
 .btn-action {
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 700;
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -556,10 +483,10 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.85rem 1.25rem;
+  padding: 0.95rem 1.4rem;
   transition: var(--transition-smooth);
   border: 1px solid transparent;
-  min-height: 52px;
+  min-height: 56px;
 }
 
 .btn-action.btn-missed {
@@ -572,19 +499,19 @@ body {
 .btn-action.btn-missed:hover, .btn-action.btn-missed:active {
   background: rgba(244, 63, 94, 0.25);
   box-shadow: 0 4px 16px var(--color-danger-glow);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .btn-action.btn-flip {
   background: var(--accent-brand);
   color: #ffffff;
   box-shadow: 0 4px 14px var(--accent-brand-glow);
-  flex: 1.2;
+  flex: 1.3;
 }
 
 .btn-action.btn-flip:hover, .btn-action.btn-flip:active {
   background: var(--accent-brand-hover);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .btn-action.btn-gotit {
@@ -597,15 +524,16 @@ body {
 .btn-action.btn-gotit:hover, .btn-action.btn-gotit:active {
   background: rgba(16, 185, 129, 0.25);
   box-shadow: 0 4px 16px var(--color-success-glow);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
-/* Secondary Navigation (Prev / Next) */
+/* Secondary Navigation */
 .nav-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  padding: 0 0.25rem;
 }
 
 .btn-nav {
@@ -615,7 +543,7 @@ body {
   font-family: inherit;
   font-size: 0.85rem;
   font-weight: 600;
-  padding: 0.5rem 1rem;
+  padding: 0.55rem 1.1rem;
   border-radius: var(--radius-sm);
   cursor: pointer;
   display: inline-flex;
@@ -625,25 +553,23 @@ body {
 }
 
 .btn-nav:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--text-main);
   border-color: var(--border-active);
 }
 
 .btn-nav:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
 .card-index-indicator {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 700;
   color: var(--text-muted);
 }
 
-/* ==========================================================================
-   Instruction & Tip Callout
-   ========================================================================== */
+/* Instructions */
 .instruction-box {
   background: rgba(19, 27, 46, 0.6);
   border: 1px solid var(--border-subtle);
@@ -659,24 +585,12 @@ body {
   flex-wrap: wrap;
 }
 
-.instruction-box kbd {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
-  padding: 0.15rem 0.35rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-main);
-}
-
-/* ==========================================================================
-   Deck Empty / Celebration State
-   ========================================================================== */
+/* Deck Empty / Finished State */
 .deck-empty-view {
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
-  padding: 3rem 2rem;
+  padding: 3.5rem 2rem;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -687,12 +601,6 @@ body {
 
 .empty-trophy {
   font-size: 3.5rem;
-  animation: bounce 1.2s infinite alternate ease-in-out;
-}
-
-@keyframes bounce {
-  0% { transform: translateY(0) scale(1); }
-  100% { transform: translateY(-8px) scale(1.05); }
 }
 
 .deck-empty-view h2 {
@@ -703,7 +611,7 @@ body {
 
 .deck-empty-view p {
   color: var(--text-muted);
-  max-width: 400px;
+  max-width: 420px;
   line-height: 1.5;
   font-size: 0.95rem;
 }
@@ -715,7 +623,7 @@ body {
   font-family: inherit;
   font-size: 0.95rem;
   font-weight: 700;
-  padding: 0.8rem 1.6rem;
+  padding: 0.85rem 1.65rem;
   border-radius: var(--radius-md);
   cursor: pointer;
   display: inline-flex;
@@ -730,20 +638,22 @@ body {
   transform: translateY(-2px);
 }
 
-/* Modal Dialog for Reset Confirmation */
+/* ==========================================================================
+   Settings Modal / Sheet (All Controls cleanly grouped here)
+   ========================================================================== */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 1rem;
+  padding: 1.25rem;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.25s ease;
 }
 
 .modal-backdrop.is-open {
@@ -751,53 +661,238 @@ body {
   pointer-events: auto;
 }
 
-.modal-content {
+.settings-sheet {
+  background: #121829;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: 1.75rem;
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  transform: scale(0.94);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.modal-backdrop.is-open .settings-sheet {
+  transform: scale(1);
+}
+
+.sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sheet-header h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.btn-close-sheet {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: var(--text-muted);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: var(--transition-smooth);
+}
+
+.btn-close-sheet:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.setting-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+/* Segmented Buttons inside Settings */
+.segmented-group {
+  display: flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  gap: 4px;
+}
+
+.segmented-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 0.65rem 0.4rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.segmented-btn.active {
+  background: var(--accent-brand);
+  color: #ffffff;
+  box-shadow: 0 4px 12px var(--accent-brand-glow);
+}
+
+.segmented-btn:not(.active):hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Toggle Switch Item */
+.setting-switch-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+}
+
+.switch-label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.switch-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.switch-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* iOS-style toggle switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 30px;
+  transition: 0.3s;
+}
+
+.toggle-slider::before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--color-success);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(22px);
+}
+
+/* Reset Button in Settings */
+.btn-danger-block {
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: #fecdd3;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.8rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.btn-danger-block:hover {
+  background: rgba(244, 63, 94, 0.25);
+}
+
+/* Small Reset Confirmation Modal */
+.confirm-modal-content {
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 1.75rem;
-  max-width: 420px;
+  max-width: 400px;
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
   box-shadow: var(--shadow-card);
-  transform: scale(0.95);
-  transition: transform 0.2s ease;
 }
 
-.modal-backdrop.is-open .modal-content {
-  transform: scale(1);
-}
-
-.modal-content h3 {
-  font-size: 1.3rem;
+.confirm-modal-content h3 {
+  font-size: 1.25rem;
   font-weight: 700;
   color: #ffffff;
 }
 
-.modal-content p {
+.confirm-modal-content p {
   color: var(--text-muted);
   font-size: 0.9rem;
   line-height: 1.5;
 }
 
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-/* ==========================================================================
-   Responsive Adaptations for iPad & Mobile
-   ========================================================================== */
+/* Mobile responsive adjustments */
 @media (max-width: 480px) {
   .card-wrapper {
-    height: 300px;
+    height: 330px;
   }
   
   .card-title {
-    font-size: 2rem;
+    font-size: 2.1rem;
   }
   
   .action-buttons-group {
@@ -807,9 +902,5 @@ body {
   
   .btn-action {
     width: 100%;
-  }
-  
-  .instruction-box {
-    font-size: 0.75rem;
   }
 }

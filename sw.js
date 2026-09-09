@@ -1,36 +1,53 @@
-const CACHE_NAME = 'states-capitals-v1';
+const CACHE_NAME = 'states-capitals-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './styles.css',
-  './app.js',
-  './data/states.js',
+  './styles.css?v=2',
+  './app.js?v=2',
+  './data/states.js?v=2',
   './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
+  // Force immediate activation of new service worker
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
 self.addEventListener('activate', (event) => {
+  // Claim clients immediately and wipe old caches
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            console.log('Purging old cache:', key);
+            return caches.delete(key);
+          }
+        })
       );
     }).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
-  // Try network first, then fall back to cache
+  // Network first: always try to fetch fresh files, fall back to cache only when offline
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
-    })
+    fetch(event.request)
+      .then((response) => {
+        // Clone and update cache with fresh network copy
+        if (response && response.status === 200 && event.request.method === 'GET') {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

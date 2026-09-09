@@ -86,6 +86,18 @@
   init();
 
   function init() {
+    // Purge any stale service worker caches immediately
+    if ('caches' in window) {
+      caches.keys().then(keys => {
+        keys.forEach(k => {
+          if (k !== 'states-capitals-v2') {
+            console.log('Purging cache:', k);
+            caches.delete(k);
+          }
+        });
+      });
+    }
+
     buildDeck();
     syncSettingsUI();
     renderStats();
@@ -434,6 +446,8 @@
     }
   }
 
+  let didSwipe = false;
+
   function onTouchEnd(e) {
     if (!isDragging || deck.length === 0) return;
     isDragging = false;
@@ -445,14 +459,13 @@
     const threshold = 65;
 
     if (currentTranslateX > threshold) {
+      didSwipe = true;
       markCard('known');
     } else if (currentTranslateX < -threshold) {
+      didSwipe = true;
       markCard('missed');
     } else {
-      // If it was a tap or release before full swipe threshold
-      if (!isTouchMoved || Math.abs(currentTranslateX) < 25) {
-        toggleCardFlip();
-      }
+      // Release without swipe: reset drag offset and let standard click flip the card
       resetCardTransforms();
     }
   }
@@ -488,25 +501,20 @@
     // Direct tap/click on card wrapper
     cardWrapper.addEventListener('click', (e) => {
       if (e.target.closest('button')) return;
-      if (Date.now() - lastFlipTime > 250) {
-        toggleCardFlip();
+      if (didSwipe) {
+        didSwipe = false;
+        return;
       }
+      toggleCardFlip();
     });
 
-    // Touch Drag & Swipe on Flashcard
-    cardWrapper.addEventListener('touchstart', onTouchStart, { passive: false });
+    // Touch events: handle swipe-to-rate gestures only
+    cardWrapper.addEventListener('touchstart', onTouchStart, { passive: true });
     cardWrapper.addEventListener('touchmove', onTouchMove, { passive: false });
-    cardWrapper.addEventListener('touchend', onTouchEnd, { passive: false });
-    cardWrapper.addEventListener('touchcancel', onTouchEnd);
-
-    // Mouse drag support for desktop/trackpad
-    cardWrapper.addEventListener('mousedown', onTouchStart);
-    window.addEventListener('mousemove', e => {
-      if (isDragging) onTouchMove(e);
-    });
-    window.addEventListener('mouseup', e => {
-      if (isDragging) onTouchEnd(e);
-    });
+    cardWrapper.addEventListener('touchend', onTouchEnd, { passive: true });
+    cardWrapper.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    // NOTE: No mousedown/mouseup listeners here — on iOS those synthetic events
+    // would double-fire and undo the flip triggered by the click event.
 
     // Action Buttons
     btnFlipCard.addEventListener('click', toggleCardFlip);

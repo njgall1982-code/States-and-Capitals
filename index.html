@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles.css?v=3">
+  <link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
 
@@ -41,6 +41,9 @@
           <span style="color: var(--text-subtle);">•</span>
           <span id="headerMasteredPercent">0%</span>
         </div>
+        <button id="btnOpenVault" class="btn-settings-toggle" title="Dad Joke Vault & Trophies" aria-label="Open Dad Joke Vault">
+          🏆
+        </button>
         <button id="btnOpenSettings" class="btn-settings-toggle" title="Study Settings" aria-label="Open Study Settings">
           ⚙️
         </button>
@@ -186,7 +189,9 @@
         <div class="map-prompt-card">
           <div class="map-prompt-meta">
             <span class="badge-mode" id="mapModeBadge">🗺️ Name the State</span>
-            <span class="map-stats-pill" id="mapStreakPill">🔥 Streak: 0</span>
+            <button class="map-stats-pill map-streak-btn" id="mapStreakPill" title="Open Dad Joke Vault & Trophies" aria-label="Open Dad Joke Vault">
+              🔥 Streak: 0 • 🏆 Vault
+            </button>
           </div>
           <h2 class="map-prompt-question" id="mapPromptQuestion">What state is highlighted on the map?</h2>
         </div>
@@ -304,11 +309,72 @@
     </div>
   </div>
 
+  <!-- Dad Joke Vault & Explorer Trophies Modal -->
+  <div class="modal-backdrop" id="vaultModal" role="dialog" aria-modal="true" aria-labelledby="vaultModalTitle">
+    <div class="vault-sheet">
+      <div class="sheet-header">
+        <h2 id="vaultModalTitle">🏆 Explorer Vault</h2>
+        <button class="btn-close-sheet" id="btnCloseVault" aria-label="Close Vault">✕</button>
+      </div>
+
+      <!-- Current Explorer Rank -->
+      <div class="vault-section">
+        <div class="vault-section-title">🧭 Geography Explorer Rank</div>
+        <div class="rank-card" id="rankCard">
+          <span class="rank-icon" id="rankIcon">🥉</span>
+          <div class="rank-info">
+            <div class="rank-title" id="rankTitle">Backseat Passenger</div>
+            <div class="rank-sub" id="rankSub">Master 10 states to become a Road Tripper!</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collection Progress Meter -->
+      <div class="vault-section">
+        <div class="vault-header">
+          <span class="vault-section-title">😄 Dad Joke Collection</span>
+          <span class="vault-count-badge" id="vaultJokesCount">0/32 Collected</span>
+        </div>
+        <div class="vault-progress-container">
+          <div class="vault-progress-bar">
+            <div class="vault-progress-fill" id="vaultProgressFill" style="width: 0%;"></div>
+          </div>
+          <div class="vault-progress-sub" id="vaultProgressPercent">0% Collected • Hit 5-streaks & conquer states!</div>
+        </div>
+      </div>
+
+      <!-- Unlocked Jokes List / Sticker Vault -->
+      <div class="vault-section" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+        <div class="joke-vault-list" id="jokeVaultList">
+          <div class="joke-vault-empty">Hit 5-question streaks or conquer states on the map to collect hilarious jokes!</div>
+        </div>
+      </div>
+
+      <button class="btn-primary-action" id="btnDoneVault" style="width: 100%; justify-content: center; margin-top: 0.5rem;">
+        Back to Study
+      </button>
+    </div>
+  </div>
+
+  <!-- Dad Joke Milestone Modal -->
+  <div class="modal-backdrop" id="jokeModal" role="dialog" aria-modal="true" aria-labelledby="jokeSetup">
+    <div class="joke-modal-content">
+      <div class="joke-badge" id="jokeBadge">⛽ PIT STOP • DAD JOKE UNLOCKED!</div>
+      <div class="joke-setup" id="jokeSetup">What did Delaware?</div>
+      <div class="joke-punchline-box">
+        <div class="joke-punchline" id="jokePunchline">A New Jersey! 👕</div>
+      </div>
+      <button class="btn-joke-continue" id="btnJokeContinue">
+        <span>Keep Rolling! 🚗</span>
+      </button>
+    </div>
+  </div>
+
   <!-- Reset Confirmation Modal -->
   <div class="modal-backdrop" id="resetModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="confirm-modal-content">
       <h3 id="modalTitle">Reset Study Progress?</h3>
-      <p>This will clear all your "Got It" and "Need Practice" marks and return all 50 states to unreviewed status.</p>
+      <p>This will clear all your "Got It" and "Need Practice" marks and return all 50 states to unreviewed status.<br><br><strong style="color: #fbbf24;">Note:</strong> All your unlocked Dad Jokes and Explorer Rank badges will stay safely saved in your Vault!</p>
       <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 0.75rem;">
         <button class="btn-nav" id="btnCancelReset">Cancel</button>
         <button class="btn-action btn-missed" id="btnConfirmReset" style="min-height: 42px; padding: 0.5rem 1.2rem;">Reset All</button>
@@ -317,8 +383,9 @@
   </div>
 
   <!-- Scripts -->
-  <script src="data/states.js?v=4"></script>
-  <script src="data/us-map-template.js?v=4"></script>
-  <script src="app.js?v=4"></script>
+  <script src="data/states.js?v=7"></script>
+  <script src="data/jokes.js?v=7"></script>
+  <script src="data/us-map-template.js?v=7"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

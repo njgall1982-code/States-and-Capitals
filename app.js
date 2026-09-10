@@ -98,11 +98,36 @@
   const btnCancelReset = document.getElementById('btnCancelReset');
   const btnConfirmReset = document.getElementById('btnConfirmReset');
 
+  // DOM Elements - Dad Joke Milestone Modal & Vault
+  const btnOpenVault = document.getElementById('btnOpenVault');
+  const vaultModal = document.getElementById('vaultModal');
+  const btnCloseVault = document.getElementById('btnCloseVault');
+  const btnDoneVault = document.getElementById('btnDoneVault');
+  const vaultProgressFill = document.getElementById('vaultProgressFill');
+  const vaultProgressPercent = document.getElementById('vaultProgressPercent');
+
+  const jokeModal = document.getElementById('jokeModal');
+  const jokeBadge = document.getElementById('jokeBadge');
+  const jokeSetup = document.getElementById('jokeSetup');
+  const jokePunchline = document.getElementById('jokePunchline');
+  const btnJokeContinue = document.getElementById('btnJokeContinue');
+
+  const vaultJokesCount = document.getElementById('vaultJokesCount');
+  const rankIcon = document.getElementById('rankIcon');
+  const rankTitle = document.getElementById('rankTitle');
+  const rankSub = document.getElementById('rankSub');
+  const jokeVaultList = document.getElementById('jokeVaultList');
+
   const STORAGE_KEY_ACTIVE_VIEW = 'states_capitals_active_view_v1';
+  const STORAGE_KEY_UNLOCKED_JOKES = 'states_capitals_jokes_v1';
+  const STORAGE_KEY_AWARDED_TIERS = 'states_capitals_awarded_tiers_v1';
 
   // Application State
   let progress = loadProgress();
   let settings = loadSettings();
+  let unlockedJokeIds = loadUnlockedJokes();
+  let awardedTotalMilestones = loadAwardedMilestones();
+  let jokeQueue = [];
   let activeView = localStorage.getItem(STORAGE_KEY_ACTIVE_VIEW) || 'cards';
   let deck = [];
   let currentIndex = 0;
@@ -238,9 +263,135 @@
     }
   }
 
-  // =========================================================================
-  // UI Rendering & Stats
-  // =========================================================================
+  function loadUnlockedJokes() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEY_UNLOCKED_JOKES);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveUnlockedJokes() {
+    try {
+      localStorage.setItem(STORAGE_KEY_UNLOCKED_JOKES, JSON.stringify(unlockedJokeIds));
+    } catch (e) {}
+  }
+
+  function loadAwardedMilestones() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEY_AWARDED_TIERS);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveAwardedMilestones() {
+    try {
+      localStorage.setItem(STORAGE_KEY_AWARDED_TIERS, JSON.stringify(awardedTotalMilestones));
+    } catch (e) {}
+  }
+
+  function getExplorerRank(knownCount) {
+    if (knownCount >= 50) return { rank: 'President of Geography!', icon: '👑', next: 'Mastered all 50 States! 🎉' };
+    if (knownCount >= 40) return { rank: 'State Governor', icon: '🏛️', next: `Master ${50 - knownCount} more to become President!` };
+    if (knownCount >= 30) return { rank: 'Park Ranger', icon: '🦅', next: `Master ${40 - knownCount} more to become Governor!` };
+    if (knownCount >= 20) return { rank: 'Trail Guide', icon: '🧭', next: `Master ${30 - knownCount} more to become Park Ranger!` };
+    if (knownCount >= 10) return { rank: 'Road Tripper', icon: '🚗', next: `Master ${20 - knownCount} more to become Trail Guide!` };
+    return { rank: 'Backseat Passenger', icon: '🥉', next: `Master ${10 - knownCount} more to become Road Tripper!` };
+  }
+
+  function updateRankAndVaultUI(knownCount) {
+    const rankInfo = getExplorerRank(knownCount);
+    if (rankIcon) rankIcon.textContent = rankInfo.icon;
+    if (rankTitle) rankTitle.textContent = rankInfo.rank;
+    if (rankSub) rankSub.textContent = rankInfo.next;
+
+    if (typeof STATE_DAD_JOKES !== 'undefined') {
+      const totalJokes = STATE_DAD_JOKES.length;
+      const count = unlockedJokeIds.length;
+      const pct = Math.round((count / totalJokes) * 100);
+
+      if (vaultJokesCount) {
+        vaultJokesCount.textContent = `${count}/${totalJokes} Collected`;
+      }
+      if (vaultProgressFill) {
+        vaultProgressFill.style.width = `${pct}%`;
+      }
+      if (vaultProgressPercent) {
+        vaultProgressPercent.textContent = `${pct}% Collected • ${count} of ${totalJokes} Unlocked`;
+      }
+
+      if (jokeVaultList) {
+        if (count === 0) {
+          jokeVaultList.innerHTML = '<div class="joke-vault-empty">Hit 5-question streaks or conquer states on the map to collect hilarious jokes!</div>';
+        } else {
+          jokeVaultList.innerHTML = unlockedJokeIds.map(id => {
+            const joke = STATE_DAD_JOKES.find(j => j.id === id);
+            if (!joke) return '';
+            return `<div class="joke-vault-item">
+              <div class="joke-vault-q">❓ ${joke.setup}</div>
+              <div class="joke-vault-a">💡 ${joke.punchline}</div>
+            </div>`;
+          }).filter(Boolean).join('');
+        }
+      }
+    }
+  }
+
+  function queueDadJoke(reasonBadge) {
+    if (typeof STATE_DAD_JOKES === 'undefined' || STATE_DAD_JOKES.length === 0) return;
+
+    // Pick randomly from all jokes to incentivize repeat play & sticker collection
+    const joke = STATE_DAD_JOKES[Math.floor(Math.random() * STATE_DAD_JOKES.length)];
+    const isNew = !unlockedJokeIds.includes(joke.id);
+
+    if (isNew) {
+      unlockedJokeIds.push(joke.id);
+      saveUnlockedJokes();
+    }
+
+    const badgeText = isNew 
+      ? `✨ NEW JOKE UNLOCKED! • ${reasonBadge}`
+      : `🔄 CLASSIC DAD JOKE! • ${reasonBadge}`;
+
+    jokeQueue.push({ badge: badgeText, joke, isNew });
+    if (!jokeModal.classList.contains('is-open')) {
+      showNextQueuedJoke();
+    } else if (btnJokeContinue) {
+      btnJokeContinue.innerHTML = '<span>Next Joke! 🥁 (' + jokeQueue.length + ' more)</span>';
+    }
+  }
+
+  function showNextQueuedJoke() {
+    if (!jokeModal || !jokeSetup || !jokePunchline) return;
+
+    if (jokeQueue.length === 0) {
+      jokeModal.classList.remove('is-open');
+      return;
+    }
+
+    const item = jokeQueue.shift();
+    if (jokeBadge) jokeBadge.textContent = item.badge;
+    jokeSetup.textContent = item.joke.setup;
+    jokePunchline.textContent = item.joke.punchline;
+
+    if (btnJokeContinue) {
+      if (jokeQueue.length > 0) {
+        btnJokeContinue.innerHTML = '<span>Next Joke! 🥁 (' + jokeQueue.length + ' more)</span>';
+      } else {
+        btnJokeContinue.innerHTML = '<span>Keep Rolling! 🚗</span>';
+      }
+    }
+
+    jokeModal.classList.add('is-open');
+
+    let known = 0;
+    US_STATES.forEach(s => { if (progress[s.state] === 'known') known++; });
+    updateRankAndVaultUI(known);
+  }
+
   function renderStats() {
     let known = 0;
     let missed = 0;
@@ -269,7 +420,10 @@
     if (settings.direction === 'random') dirName = 'Random Mix';
     
     activeDeckBadge.textContent = `${deckName} • ${dirName}`;
-    activeStatsBadge.textContent = `❌ ${missed} Missed • ${remaining} Left`;
+    
+    const rankInfo = getExplorerRank(known);
+    activeStatsBadge.textContent = `${rankInfo.icon} ${rankInfo.rank} • ❌ ${missed} Missed • ${remaining} Left`;
+    updateRankAndVaultUI(known);
   }
 
   function syncSettingsUI() {
@@ -648,6 +802,27 @@
       }
     });
 
+    // Explorer Vault Modal Open / Close
+    const openVault = () => {
+      let known = 0;
+      US_STATES.forEach(s => { if (progress[s.state] === 'known') known++; });
+      updateRankAndVaultUI(known);
+      if (vaultModal) vaultModal.classList.add('is-open');
+    };
+    const closeVault = () => {
+      if (vaultModal) vaultModal.classList.remove('is-open');
+    };
+
+    if (btnOpenVault) btnOpenVault.addEventListener('click', openVault);
+    if (mapStreakPill) mapStreakPill.addEventListener('click', openVault);
+    if (btnCloseVault) btnCloseVault.addEventListener('click', closeVault);
+    if (btnDoneVault) btnDoneVault.addEventListener('click', closeVault);
+    if (vaultModal) {
+      vaultModal.addEventListener('click', e => {
+        if (e.target === vaultModal) closeVault();
+      });
+    }
+
     // Trigger Reset from Settings
     btnTriggerReset.addEventListener('click', () => {
       settingsModal.classList.remove('is-open');
@@ -661,9 +836,11 @@
     btnConfirmReset.addEventListener('click', () => {
       progress = {};
       saveProgress();
+      awardedTotalMilestones = [];
+      saveAwardedMilestones();
       resetModal.classList.remove('is-open');
       mapStreak = 0;
-      mapStreakPill.textContent = '🔥 Streak: 0';
+      mapStreakPill.textContent = '🔥 Streak: 0 • 🏆 Vault';
       renderStats();
       buildDeck();
       renderCurrentCard();
@@ -675,6 +852,18 @@
     resetModal.addEventListener('click', e => {
       if (e.target === resetModal) resetModal.classList.remove('is-open');
     });
+
+    // Dad Joke Milestone Modal Dismiss & Sequential Queue Advancer
+    if (btnJokeContinue && jokeModal) {
+      btnJokeContinue.addEventListener('click', () => {
+        showNextQueuedJoke();
+      });
+      jokeModal.addEventListener('click', e => {
+        if (e.target === jokeModal) {
+          showNextQueuedJoke();
+        }
+      });
+    }
 
     // View Switcher Tabs
     tabFlashcards.addEventListener('click', () => switchView('cards'));
@@ -690,7 +879,12 @@
 
     // Keyboard Shortcuts (Magic Keyboard / Desktop)
     window.addEventListener('keydown', e => {
-      if (settingsModal.classList.contains('is-open') || resetModal.classList.contains('is-open')) return;
+      if (
+        settingsModal.classList.contains('is-open') || 
+        resetModal.classList.contains('is-open') ||
+        (vaultModal && vaultModal.classList.contains('is-open')) ||
+        (jokeModal && jokeModal.classList.contains('is-open'))
+      ) return;
 
       if (activeView === 'cards') {
         if (e.code === 'Space') {
@@ -794,7 +988,7 @@
     shuffleArray(mapDeck);
     mapIndex = 0;
     mapStreak = 0;
-    mapStreakPill.textContent = '🔥 Streak: 0';
+    mapStreakPill.textContent = '🔥 Streak: 0 • 🏆 Vault';
     renderMapQuestion();
   }
 
@@ -866,17 +1060,24 @@
     // Reset feedback card
     mapFeedbackCard.style.display = 'none';
 
-    // Highlight map path
+    // Highlight map path & render territory colors (Green = conquered, Red = missed)
     if (isMapSvgLoaded) {
       const allStatePaths = mapSvgContainer.querySelectorAll('.us-vector-map path[data-state-id]');
       allStatePaths.forEach(p => {
         p.classList.remove('state-active', 'state-correct', 'state-incorrect');
         const stateCode = p.dataset.stateId;
         const stateObj = US_STATES.find(s => s.id === stateCode);
-        if (stateObj && progress[stateObj.state] === 'known') {
-          p.classList.add('state-conquered');
-        } else {
-          p.classList.remove('state-conquered');
+        if (stateObj) {
+          const status = progress[stateObj.state];
+          if (status === 'known') {
+            p.classList.add('state-conquered');
+            p.classList.remove('state-missed');
+          } else if (status === 'missed') {
+            p.classList.add('state-missed');
+            p.classList.remove('state-conquered');
+          } else {
+            p.classList.remove('state-conquered', 'state-missed');
+          }
         }
       });
 
@@ -925,17 +1126,32 @@
 
     if (chosen.isCorrect) {
       if (targetPath) {
-        targetPath.classList.remove('state-conquered');
+        targetPath.classList.remove('state-conquered', 'state-missed');
         targetPath.classList.add('state-correct');
       }
       mapChoiceBtns[index].classList.add('is-correct');
       mapStreak++;
-      mapStreakPill.textContent = `🔥 Streak: ${mapStreak}`;
+      mapStreakPill.textContent = `🔥 Streak: ${mapStreak} • 🏆 Vault`;
 
-      // Automatically register progress as Mastered
+      // Automatically register progress as Mastered (Green)
       progress[currentMapState.state] = 'known';
       saveProgress();
       renderStats();
+
+      // Trigger A: 5-in-a-row Streak Milestone
+      if (mapStreak > 0 && mapStreak % 5 === 0) {
+        queueDadJoke(`🔥 ${mapStreak}-IN-A-ROW STREAK BONUS!`);
+      }
+
+      // Trigger B: Cumulative Conquered Milestone (every 5 states total: 5, 10, 15...)
+      let knownCount = 0;
+      US_STATES.forEach(s => { if (progress[s.state] === 'known') knownCount++; });
+      const currentTier = Math.floor(knownCount / 5) * 5;
+      if (currentTier >= 5 && !awardedTotalMilestones.includes(currentTier)) {
+        awardedTotalMilestones.push(currentTier);
+        saveAwardedMilestones();
+        queueDadJoke(`🗺️ ${currentTier} STATES CONQUERED MILESTONE!`);
+      }
 
       mapFeedbackIcon.textContent = '✅';
       mapFeedbackTitle.textContent = 'Correct!';
@@ -947,7 +1163,7 @@
     } else {
       if (targetPath) {
         targetPath.classList.remove('state-conquered');
-        targetPath.classList.add('state-incorrect');
+        targetPath.classList.add('state-missed', 'state-incorrect');
       }
       mapChoiceBtns[index].classList.add('is-wrong');
 
@@ -958,9 +1174,9 @@
       }
 
       mapStreak = 0;
-      mapStreakPill.textContent = 'Streak: 0';
+      mapStreakPill.textContent = '🔥 Streak: 0 • 🏆 Vault';
 
-      // Automatically register progress as Need Practice
+      // Automatically register progress as Need Practice (Red)
       progress[currentMapState.state] = 'missed';
       saveProgress();
       renderStats();

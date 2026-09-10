@@ -7,7 +7,9 @@
   'use strict';
 
   // Local Storage Keys
-  const STORAGE_KEY_PROGRESS = 'states_capitals_progress_v1';
+  const STORAGE_KEY_PROGRESS_CARDS = 'states_capitals_progress_cards_v1';
+  const STORAGE_KEY_PROGRESS_MAP = 'states_capitals_progress_map_v1';
+  const STORAGE_KEY_PROGRESS_LEGACY = 'states_capitals_progress_v1';
   const STORAGE_KEY_SETTINGS = 'states_capitals_settings_v2';
 
   // DOM Elements - Main UI
@@ -92,6 +94,10 @@
   const mapHookQuote = document.getElementById('mapHookQuote');
   const mapHookKey = document.getElementById('mapHookKey');
   const btnNextMapState = document.getElementById('btnNextMapState');
+  const btnToggleMapZoom = document.getElementById('btnToggleMapZoom');
+  const zoomPillIcon = document.getElementById('zoomPillIcon');
+  const zoomPillText = document.getElementById('zoomPillText');
+  const toggleMapAutoZoom = document.getElementById('toggleMapAutoZoom');
 
   // DOM Elements - Reset Modal
   const resetModal = document.getElementById('resetModal');
@@ -121,10 +127,11 @@
   const STORAGE_KEY_ACTIVE_VIEW = 'states_capitals_active_view_v1';
   const STORAGE_KEY_UNLOCKED_JOKES = 'states_capitals_jokes_v1';
   const STORAGE_KEY_AWARDED_TIERS = 'states_capitals_awarded_tiers_v1';
-  const CURRENT_CACHE_VERSION = 'states-capitals-v7';
+  const CURRENT_CACHE_VERSION = 'states-capitals-v9';
 
   // Application State
-  let progress = loadProgress();
+  let progressCards = loadProgressCards();
+  let progressMap = loadProgressMap();
   let settings = loadSettings();
   let unlockedJokeIds = loadUnlockedJokes();
   let awardedTotalMilestones = loadAwardedMilestones();
@@ -135,7 +142,7 @@
   let isFlipped = false;
   let cardDirectionCache = {};
 
-  // Map Quiz State
+  // Map Quiz & Camera Zoom State
   let mapDeck = [];
   let mapIndex = 0;
   let mapStreak = 0;
@@ -144,6 +151,10 @@
   let currentMapRoundMode = 'state-first';
   let isMapAnswered = false;
   let isMapSvgLoaded = false;
+  const SVG_DEFAULT_VIEWBOX = { x: 0, y: 0, width: 959, height: 593 };
+  let currentViewBox = { ...SVG_DEFAULT_VIEWBOX };
+  let isMapZoomedIn = false;
+  let mapCameraAnimId = null;
 
   // Swipe & Touch variables
   let touchStartX = 0;
@@ -188,39 +199,68 @@
   // =========================================================================
   // Storage & Settings Helpers
   // =========================================================================
-  function loadProgress() {
+  function loadProgressCards() {
     try {
-      const data = localStorage.getItem(STORAGE_KEY_PROGRESS);
-      return data ? JSON.parse(data) : {};
+      const data = localStorage.getItem(STORAGE_KEY_PROGRESS_CARDS);
+      if (data) return JSON.parse(data);
+      // Migrate legacy progress to cards if exists
+      const legacy = localStorage.getItem(STORAGE_KEY_PROGRESS_LEGACY);
+      return legacy ? JSON.parse(legacy) : {};
     } catch (e) {
-      console.warn('LocalStorage error:', e);
+      console.warn('LocalStorage cards progress error:', e);
       return {};
     }
   }
 
-  function saveProgress() {
+  function saveProgressCards() {
     try {
-      localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(progress));
+      localStorage.setItem(STORAGE_KEY_PROGRESS_CARDS, JSON.stringify(progressCards));
     } catch (e) {
-      console.warn('LocalStorage save error:', e);
+      console.warn('LocalStorage save cards progress error:', e);
+    }
+  }
+
+  function loadProgressMap() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEY_PROGRESS_MAP);
+      return data ? JSON.parse(data) : {};
+    } catch (e) {
+      console.warn('LocalStorage map progress error:', e);
+      return {};
+    }
+  }
+
+  function saveProgressMap() {
+    try {
+      localStorage.setItem(STORAGE_KEY_PROGRESS_MAP, JSON.stringify(progressMap));
+    } catch (e) {
+      console.warn('LocalStorage save map progress error:', e);
     }
   }
 
   function loadSettings() {
     try {
       const data = localStorage.getItem(STORAGE_KEY_SETTINGS);
-      return data ? JSON.parse(data) : {
+      return data ? Object.assign({
         direction: 'state-first',
         filter: 'all',
         order: 'shuffle',
-        hintsEnabled: true
+        hintsEnabled: true,
+        mapAutoZoom: true
+      }, JSON.parse(data)) : {
+        direction: 'state-first',
+        filter: 'all',
+        order: 'shuffle',
+        hintsEnabled: true,
+        mapAutoZoom: true
       };
     } catch (e) {
       return {
         direction: 'state-first',
         filter: 'all',
         order: 'shuffle',
-        hintsEnabled: true
+        hintsEnabled: true,
+        mapAutoZoom: true
       };
     }
   }
@@ -241,7 +281,7 @@
 
     // Filter Deck
     if (settings.filter === 'missed') {
-      list = list.filter(item => progress[item.state] === 'missed');
+      list = list.filter(item => progressCards[item.state] === 'missed');
     }
 
     // Sort Deck
@@ -388,9 +428,9 @@
 
     jokeModal.classList.add('is-open');
 
-    let known = 0;
-    US_STATES.forEach(s => { if (progress[s.state] === 'known') known++; });
-    updateRankAndVaultUI(known);
+    let knownMap = 0;
+    US_STATES.forEach(s => { if (progressMap[s.state] === 'known') knownMap++; });
+    updateRankAndVaultUI(knownMap);
   }
 
   function renderStats() {
@@ -398,8 +438,11 @@
     let missed = 0;
     const total = US_STATES.length;
 
+    // Active progress depends on active view (Flashcards vs Map Quiz)
+    const activeProgress = activeView === 'map' ? progressMap : progressCards;
+
     US_STATES.forEach(item => {
-      const status = progress[item.state];
+      const status = activeProgress[item.state];
       if (status === 'known') known++;
       else if (status === 'missed') missed++;
     });
@@ -419,12 +462,21 @@
     let dirName = 'State First';
     if (settings.direction === 'capital-first') dirName = 'Capital First';
     if (settings.direction === 'random') dirName = 'Random Mix';
-    
-    activeDeckBadge.textContent = `${deckName} • ${dirName}`;
-    
-    const rankInfo = getExplorerRank(known);
+
+    if (activeView === 'map') {
+      activeDeckBadge.textContent = `Map Quiz • ${dirName}`;
+      if (headerStatsPill) headerStatsPill.title = 'Map Quiz Progress';
+    } else {
+      activeDeckBadge.textContent = `${deckName} • ${dirName}`;
+      if (headerStatsPill) headerStatsPill.title = 'Flashcards Study Progress';
+    }
+
+    // Vault and Rank are tied to Map Quiz territory conquered
+    let knownMap = 0;
+    US_STATES.forEach(s => { if (progressMap[s.state] === 'known') knownMap++; });
+    const rankInfo = getExplorerRank(knownMap);
     activeStatsBadge.textContent = `${rankInfo.icon} ${rankInfo.rank} • ❌ ${missed} Missed • ${remaining} Left`;
-    updateRankAndVaultUI(known);
+    updateRankAndVaultUI(knownMap);
   }
 
   function syncSettingsUI() {
@@ -445,6 +497,11 @@
 
     // Hints
     toggleHints.checked = settings.hintsEnabled !== false;
+
+    // Map Camera Auto-Zoom
+    if (toggleMapAutoZoom) {
+      toggleMapAutoZoom.checked = settings.mapAutoZoom !== false;
+    }
   }
 
   function renderCurrentCard() {
@@ -462,7 +519,7 @@
       deckEmptyView.style.display = 'flex';
 
       if (settings.filter === 'missed') {
-        const anyMissed = US_STATES.some(s => progress[s.state] === 'missed');
+        const anyMissed = US_STATES.some(s => progressCards[s.state] === 'missed');
         if (anyMissed) {
           emptyDeckTitle.textContent = 'Set Finished!';
           emptyDeckDesc.textContent = 'You have reviewed all your missed cards. Switch back to "All States" or review again.';
@@ -492,7 +549,7 @@
     deckEmptyView.style.display = 'none';
 
     const item = deck[currentIndex];
-    const status = progress[item.state] || 'unseen';
+    const status = progressCards[item.state] || 'unseen';
 
     // Determine Side Orientation
     let isStateOnFront = true;
@@ -578,8 +635,8 @@
   function markCard(status) {
     if (deck.length === 0) return;
     const currentItem = deck[currentIndex];
-    progress[currentItem.state] = status;
-    saveProgress();
+    progressCards[currentItem.state] = status;
+    saveProgressCards();
     renderStats();
 
     animateCardExit(status === 'known' ? 1 : -1, () => {
@@ -803,10 +860,23 @@
       }
     });
 
+    // Setting: Map Camera Auto-Zoom Toggle
+    if (toggleMapAutoZoom) {
+      toggleMapAutoZoom.addEventListener('change', () => {
+        settings.mapAutoZoom = toggleMapAutoZoom.checked;
+        saveSettings();
+        if (!settings.mapAutoZoom) {
+          zoomToFullMap(true);
+        } else if (currentMapState) {
+          zoomToState(currentMapState.id, true);
+        }
+      });
+    }
+
     // Explorer Vault Modal Open / Close
     const openVault = () => {
       let known = 0;
-      US_STATES.forEach(s => { if (progress[s.state] === 'known') known++; });
+      US_STATES.forEach(s => { if (progressMap[s.state] === 'known') known++; });
       updateRankAndVaultUI(known);
       if (vaultModal) vaultModal.classList.add('is-open');
     };
@@ -835,8 +905,10 @@
     });
 
     btnConfirmReset.addEventListener('click', () => {
-      progress = {};
-      saveProgress();
+      progressCards = {};
+      saveProgressCards();
+      progressMap = {};
+      saveProgressMap();
       awardedTotalMilestones = [];
       saveAwardedMilestones();
       resetModal.classList.remove('is-open');
@@ -877,6 +949,14 @@
 
     // Next Map Question Button
     btnNextMapState.addEventListener('click', advanceMapQuestion);
+
+    // Toggle Map Zoom Floating Button
+    if (btnToggleMapZoom) {
+      btnToggleMapZoom.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMapZoom();
+      });
+    }
 
     // Keyboard Shortcuts (Magic Keyboard / Desktop)
     window.addEventListener('keydown', e => {
@@ -920,6 +1000,9 @@
         } else if (['Enter', ' '].includes(e.key) && isMapAnswered) {
           e.preventDefault();
           advanceMapQuestion();
+        } else if (['z', 'Z'].includes(e.key)) {
+          e.preventDefault();
+          toggleMapZoom();
         }
       }
     });
@@ -950,6 +1033,10 @@
       }
       if (!currentMapState) {
         initMapQuiz();
+      } else if (settings.mapAutoZoom !== false) {
+        setTimeout(() => {
+          if (currentMapState) zoomToState(currentMapState.id, true);
+        }, 80);
       }
     } else {
       tabMapQuiz.classList.remove('active');
@@ -960,28 +1047,188 @@
       mapView.style.display = 'none';
       cardsView.style.display = 'flex';
     }
+    renderStats();
   }
 
   // =========================================================================
-  // Map Quiz Engine
+  // Map Quiz Engine & Smart Camera Zoom
   // =========================================================================
   function initMapSvg() {
     if (window.US_MAP_SVG && mapSvgContainer) {
       mapSvgContainer.innerHTML = window.US_MAP_SVG;
       isMapSvgLoaded = true;
 
-      // Allow clicking highlighted state directly for visual feedback
       const svg = mapSvgContainer.querySelector('.us-vector-map');
       if (svg) {
+        currentViewBox = { ...SVG_DEFAULT_VIEWBOX };
+        svg.setAttribute('viewBox', '0 0 959 593');
+
+        // Clicking highlighted state pulses it; tapping map elsewhere toggles zoom
         svg.addEventListener('click', (e) => {
           const path = e.target.closest('path[data-state-id]');
           if (path && currentMapState && path.id === `state-${currentMapState.id}`) {
-            path.style.transform = 'scale(1.03)';
+            path.style.transform = 'scale(1.04)';
             setTimeout(() => { path.style.transform = ''; }, 200);
+          } else {
+            toggleMapZoom();
           }
         });
       }
     }
+  }
+
+  function calculateStateViewBox(stateId) {
+    const targetPath = document.getElementById(`state-${stateId}`);
+    if (!targetPath || typeof targetPath.getBBox !== 'function') {
+      return { ...SVG_DEFAULT_VIEWBOX };
+    }
+
+    let bbox;
+    try {
+      bbox = targetPath.getBBox();
+    } catch (e) {
+      return { ...SVG_DEFAULT_VIEWBOX };
+    }
+
+    if (!bbox || bbox.width <= 0 || bbox.height <= 0) {
+      return { ...SVG_DEFAULT_VIEWBOX };
+    }
+
+    // Minimum viewport dimensions to maintain regional geographic context (neighbors, coastlines)
+    const MIN_W = 320;
+    const MIN_H = 198;
+    const ASPECT = 959 / 593;
+
+    // Generous padding around the state
+    const padX = Math.max(65, bbox.width * 0.45);
+    const padY = Math.max(45, bbox.height * 0.45);
+
+    let targetW = Math.max(MIN_W, bbox.width + padX * 2);
+    let targetH = Math.max(MIN_H, bbox.height + padY * 2);
+
+    if (targetW / targetH > ASPECT) {
+      targetH = targetW / ASPECT;
+    } else {
+      targetW = targetH * ASPECT;
+    }
+
+    const centerX = bbox.x + bbox.width / 2;
+    const centerY = bbox.y + bbox.height / 2;
+
+    let targetX = centerX - targetW / 2;
+    let targetY = centerY - targetH / 2;
+
+    // Keep within reasonable SVG bounds
+    if (targetX < -20) targetX = -20;
+    if (targetY < -20) targetY = -20;
+    if (targetX + targetW > 980) targetX = 980 - targetW;
+    if (targetY + targetH > 615) targetY = 615 - targetH;
+
+    return {
+      x: Math.round(targetX),
+      y: Math.round(targetY),
+      width: Math.round(targetW),
+      height: Math.round(targetH)
+    };
+  }
+
+  function animateSvgViewBox(targetBox, duration = 450) {
+    const svg = mapSvgContainer ? mapSvgContainer.querySelector('.us-vector-map') : null;
+    if (!svg) return;
+
+    if (mapCameraAnimId) {
+      cancelAnimationFrame(mapCameraAnimId);
+      mapCameraAnimId = null;
+    }
+
+    const startX = currentViewBox.x;
+    const startY = currentViewBox.y;
+    const startW = currentViewBox.width;
+    const startH = currentViewBox.height;
+
+    const dx = targetBox.x - startX;
+    const dy = targetBox.y - startY;
+    const dw = targetBox.width - startW;
+    const dh = targetBox.height - startH;
+
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(dw) < 1 && Math.abs(dh) < 1) {
+      currentViewBox = { ...targetBox };
+      svg.setAttribute('viewBox', `${targetBox.x} ${targetBox.y} ${targetBox.width} ${targetBox.height}`);
+      return;
+    }
+
+    const startTime = performance.now();
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Smooth ease-out cubic
+      const ease = 1 - Math.pow(1 - progress, 3);
+
+      const curX = startX + dx * ease;
+      const curY = startY + dy * ease;
+      const curW = startW + dw * ease;
+      const curH = startH + dh * ease;
+
+      currentViewBox = { x: curX, y: curY, width: curW, height: curH };
+      svg.setAttribute('viewBox', `${curX.toFixed(1)} ${curY.toFixed(1)} ${curW.toFixed(1)} ${curH.toFixed(1)}`);
+
+      if (progress < 1) {
+        mapCameraAnimId = requestAnimationFrame(step);
+      } else {
+        mapCameraAnimId = null;
+        currentViewBox = { ...targetBox };
+        svg.setAttribute('viewBox', `${targetBox.x} ${targetBox.y} ${targetBox.width} ${targetBox.height}`);
+      }
+    }
+
+    mapCameraAnimId = requestAnimationFrame(step);
+  }
+
+  function zoomToState(stateId, smooth = true) {
+    if (!isMapSvgLoaded) return;
+    const box = calculateStateViewBox(stateId);
+    isMapZoomedIn = true;
+    updateZoomPillUI(true);
+    if (smooth) {
+      animateSvgViewBox(box, 450);
+    } else {
+      const svg = mapSvgContainer ? mapSvgContainer.querySelector('.us-vector-map') : null;
+      if (svg) {
+        currentViewBox = { ...box };
+        svg.setAttribute('viewBox', `${box.x} ${box.y} ${box.width} ${box.height}`);
+      }
+    }
+  }
+
+  function zoomToFullMap(smooth = true) {
+    if (!isMapSvgLoaded) return;
+    isMapZoomedIn = false;
+    updateZoomPillUI(false);
+    if (smooth) {
+      animateSvgViewBox(SVG_DEFAULT_VIEWBOX, 400);
+    } else {
+      const svg = mapSvgContainer ? mapSvgContainer.querySelector('.us-vector-map') : null;
+      if (svg) {
+        currentViewBox = { ...SVG_DEFAULT_VIEWBOX };
+        svg.setAttribute('viewBox', '0 0 959 593');
+      }
+    }
+  }
+
+  function toggleMapZoom() {
+    if (isMapZoomedIn) {
+      zoomToFullMap(true);
+    } else if (currentMapState) {
+      zoomToState(currentMapState.id, true);
+    }
+  }
+
+  function updateZoomPillUI(zoomed) {
+    if (!btnToggleMapZoom) return;
+    btnToggleMapZoom.classList.toggle('is-zoomed', zoomed);
+    if (zoomPillIcon) zoomPillIcon.textContent = zoomed ? '🇺🇸' : '🔍';
+    if (zoomPillText) zoomPillText.textContent = zoomed ? 'Full USA' : 'Focus';
   }
 
   function initMapQuiz() {
@@ -1069,7 +1316,7 @@
         const stateCode = p.dataset.stateId;
         const stateObj = US_STATES.find(s => s.id === stateCode);
         if (stateObj) {
-          const status = progress[stateObj.state];
+          const status = progressMap[stateObj.state];
           if (status === 'known') {
             p.classList.add('state-conquered');
             p.classList.remove('state-missed');
@@ -1085,6 +1332,17 @@
       const targetPath = document.getElementById(`state-${currentMapState.id}`);
       if (targetPath) {
         targetPath.classList.add('state-active');
+      }
+
+      // Smart Camera Auto-Zoom to active state
+      if (settings.mapAutoZoom !== false) {
+        setTimeout(() => {
+          if (currentMapState) {
+            zoomToState(currentMapState.id, true);
+          }
+        }, 50);
+      } else {
+        zoomToFullMap(false);
       }
     }
 
@@ -1135,8 +1393,8 @@
       mapStreakPill.textContent = `🔥 Streak: ${mapStreak} • 🏆 Vault`;
 
       // Automatically register progress as Mastered (Green)
-      progress[currentMapState.state] = 'known';
-      saveProgress();
+      progressMap[currentMapState.state] = 'known';
+      saveProgressMap();
       renderStats();
 
       // Trigger A: 5-in-a-row Streak Milestone
@@ -1146,7 +1404,7 @@
 
       // Trigger B: Cumulative Conquered Milestone (every 5 states total: 5, 10, 15...)
       let knownCount = 0;
-      US_STATES.forEach(s => { if (progress[s.state] === 'known') knownCount++; });
+      US_STATES.forEach(s => { if (progressMap[s.state] === 'known') knownCount++; });
       const currentTier = Math.floor(knownCount / 5) * 5;
       if (currentTier >= 5 && !awardedTotalMilestones.includes(currentTier)) {
         awardedTotalMilestones.push(currentTier);
@@ -1178,8 +1436,8 @@
       mapStreakPill.textContent = '🔥 Streak: 0 • 🏆 Vault';
 
       // Automatically register progress as Need Practice (Red)
-      progress[currentMapState.state] = 'missed';
-      saveProgress();
+      progressMap[currentMapState.state] = 'missed';
+      saveProgressMap();
       renderStats();
 
       mapFeedbackIcon.textContent = '❌';
@@ -1214,7 +1472,7 @@
   function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register(`./sw.js?v=7`).then(reg => {
+        navigator.serviceWorker.register(`./sw.js?v=9`).then(reg => {
           // Proactively check for newer versions on iOS / mobile Safari
           reg.update().catch(() => {});
 

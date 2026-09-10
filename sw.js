@@ -1,12 +1,12 @@
-const CACHE_NAME = 'states-capitals-v7';
+const CACHE_NAME = 'states-capitals-v9';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './styles.css?v=7',
-  './app.js?v=7',
-  './data/states.js?v=7',
-  './data/jokes.js?v=7',
-  './data/us-map-template.js?v=7',
+  './styles.css?v=9',
+  './app.js?v=9',
+  './data/states.js?v=9',
+  './data/jokes.js?v=9',
+  './data/us-map-template.js?v=9',
   './manifest.json'
 ];
 

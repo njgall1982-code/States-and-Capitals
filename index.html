@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body>
 
@@ -198,6 +198,10 @@
 
         <!-- SVG Map Container -->
         <div class="map-viewport-wrapper">
+          <button class="btn-map-zoom-pill" id="btnToggleMapZoom" aria-label="Toggle map zoom" title="Toggle Regional Zoom">
+            <span class="zoom-pill-icon" id="zoomPillIcon">🔍</span>
+            <span class="zoom-pill-text" id="zoomPillText">Focus</span>
+          </button>
           <div class="map-svg-container" id="mapSvgContainer" role="img" aria-label="Interactive United States Map">
             <!-- US Map SVG is injected dynamically from data/us-map-template.js -->
           </div>
@@ -283,14 +287,26 @@
         </div>
       </div>
 
-      <!-- Setting 4: Memory Hints Mode Toggle -->
-      <div class="setting-switch-row">
-        <div class="switch-label-group">
-          <span class="switch-title">💡 Memory Hooks</span>
+      <!-- Setting 4: Memory Hints Toggle -->
+      <div class="setting-item">
+        <div class="setting-info">
+          <span class="switch-title">Memory Hooks</span>
           <span class="switch-subtitle">Show kid-safe mnemonic hook on card back</span>
         </div>
         <label class="toggle-switch">
           <input type="checkbox" id="toggleHints" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <!-- Setting 5: Map Camera Auto-Zoom -->
+      <div class="setting-item">
+        <div class="setting-info">
+          <span class="switch-title">Map Camera Auto-Zoom</span>
+          <span class="switch-subtitle">Smoothly focus into quizzed state & surrounding region</span>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggleMapAutoZoom" checked>
           <span class="toggle-slider"></span>
         </label>
       </div>
@@ -383,9 +399,9 @@
   </div>
 
   <!-- Scripts -->
-  <script src="data/states.js?v=7"></script>
-  <script src="data/jokes.js?v=7"></script>
-  <script src="data/us-map-template.js?v=7"></script>
-  <script src="app.js?v=7"></script>
+  <script src="data/states.js?v=9"></script>
+  <script src="data/jokes.js?v=9"></script>
+  <script src="data/us-map-template.js?v=9"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>

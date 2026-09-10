@@ -121,6 +121,7 @@
   const STORAGE_KEY_ACTIVE_VIEW = 'states_capitals_active_view_v1';
   const STORAGE_KEY_UNLOCKED_JOKES = 'states_capitals_jokes_v1';
   const STORAGE_KEY_AWARDED_TIERS = 'states_capitals_awarded_tiers_v1';
+  const CURRENT_CACHE_VERSION = 'states-capitals-v7';
 
   // Application State
   let progress = loadProgress();
@@ -156,12 +157,12 @@
   init();
 
   function init() {
-    // Purge any stale service worker caches immediately
+    // Purge any stale service worker caches immediately (iOS / Safari cache buster)
     if ('caches' in window) {
       caches.keys().then(keys => {
         keys.forEach(k => {
-          if (k !== 'states-capitals-v2') {
-            console.log('Purging cache:', k);
+          if (k !== CURRENT_CACHE_VERSION) {
+            console.log('Purging stale cache:', k);
             caches.delete(k);
           }
         });
@@ -1208,13 +1209,41 @@
   }
 
   // =========================================================================
-  // Service Worker for Offline / iPad PWA
+  // Service Worker for Offline / iPad PWA (with iOS Force Update)
   // =========================================================================
   function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => {
+        navigator.serviceWorker.register(`./sw.js?v=7`).then(reg => {
+          // Proactively check for newer versions on iOS / mobile Safari
+          reg.update().catch(() => {});
+
+          // If a new worker is waiting, trigger instant activation
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+
+          reg.addEventListener('updatefound', () => {
+            const installing = reg.installing;
+            if (installing) {
+              installing.addEventListener('statechange', () => {
+                if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+                  installing.postMessage({ type: 'SKIP_WAITING' });
+                }
+              });
+            }
+          });
+        }).catch(err => {
           console.log('SW registration note:', err);
+        });
+
+        // Automatically reload when new service worker takes control on iOS
+        let isRefreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!isRefreshing) {
+            isRefreshing = true;
+            window.location.reload();
+          }
         });
       });
     }

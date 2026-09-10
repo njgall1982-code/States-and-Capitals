@@ -59,8 +59,22 @@
       </div>
     </div>
 
-    <!-- Hero Flashcard Arena (Expanded for iPad Screen Real Estate) -->
-    <main class="card-arena" id="cardArena">
+    <!-- Top View Switcher (Flashcards vs Map Quiz) -->
+    <div class="view-switch-bar">
+      <div class="segmented-group view-toggle-group" id="viewToggleGroup" role="tablist" aria-label="Mode Selection">
+        <button class="segmented-btn active" id="tabFlashcards" role="tab" aria-selected="true" data-view="cards">
+          🎴 Flashcards
+        </button>
+        <button class="segmented-btn" id="tabMapQuiz" role="tab" aria-selected="false" data-view="map">
+          🗺️ Map Quiz
+        </button>
+      </div>
+    </div>
+
+    <!-- Cards View (Original Flashcards) -->
+    <div class="view-panel active" id="cardsView">
+      <!-- Hero Flashcard Arena (Expanded for iPad Screen Real Estate) -->
+      <main class="card-arena" id="cardArena">
       <div class="card-wrapper" id="cardWrapper" tabindex="0" role="region" aria-label="Interactive Flashcard">
         
         <!-- Interactive Swipe Badges -->
@@ -153,14 +167,78 @@
       </button>
     </div>
 
-    <!-- Quick Instructions Bar -->
-    <div class="instruction-box">
-      <span>👆 <strong>Tap</strong> to flip</span>
-      <span>•</span>
-      <span>👈 <strong>Swipe Left</strong>: Need Practice</span>
-      <span>•</span>
-      <span>👉 <strong>Swipe Right</strong>: Got It!</span>
-    </div>
+      <!-- Quick Instructions Bar -->
+      <div class="instruction-box">
+        <span>👆 <strong>Tap</strong> to flip</span>
+        <span>•</span>
+        <span>👈 <strong>Swipe Left</strong>: Need Practice</span>
+        <span>•</span>
+        <span>👉 <strong>Swipe Right</strong>: Got It!</span>
+      </div>
+
+    </div><!-- /cardsView -->
+
+    <!-- Map Quiz View -->
+    <div class="view-panel" id="mapView" style="display: none;">
+      <section class="map-arena" id="mapArena" role="region" aria-label="Interactive Map Quiz">
+        
+        <!-- Question Prompt Banner -->
+        <div class="map-prompt-card">
+          <div class="map-prompt-meta">
+            <span class="badge-mode" id="mapModeBadge">🗺️ Name the State</span>
+            <span class="map-stats-pill" id="mapStreakPill">🔥 Streak: 0</span>
+          </div>
+          <h2 class="map-prompt-question" id="mapPromptQuestion">What state is highlighted on the map?</h2>
+        </div>
+
+        <!-- SVG Map Container -->
+        <div class="map-viewport-wrapper">
+          <div class="map-svg-container" id="mapSvgContainer" role="img" aria-label="Interactive United States Map">
+            <!-- US Map SVG is injected dynamically from data/us-map-template.js -->
+          </div>
+        </div>
+
+        <!-- Feedback & Memory Hook Card (Reveals after answering) -->
+        <div class="map-feedback-card" id="mapFeedbackCard" style="display: none;">
+          <div class="map-feedback-main">
+            <span class="map-feedback-icon" id="mapFeedbackIcon">✅</span>
+            <div class="map-feedback-text">
+              <div class="map-feedback-title" id="mapFeedbackTitle">Correct!</div>
+              <div class="map-feedback-subtitle" id="mapFeedbackSubtitle">That's Kansas!</div>
+            </div>
+          </div>
+          <div class="map-feedback-hook" id="mapFeedbackHook" style="display: none;">
+            <div class="hook-header"><span>💡</span> Memory Hook</div>
+            <div class="hook-quote" id="mapHookQuote">"A toe peeking in Kansas"</div>
+            <div class="hook-key" id="mapHookKey">Toe peek = Topeka</div>
+          </div>
+          <button class="btn-primary-action btn-next-map" id="btnNextMapState" aria-label="Next question">
+            <span>Next State ⏭</span>
+          </button>
+        </div>
+
+        <!-- 4 Multiple Choice Buttons (Real Neighbors) -->
+        <div class="map-options-grid" id="mapOptionsGrid" role="group" aria-label="Answer Choices">
+          <button class="btn-map-option" id="mapChoice0" data-index="0">
+            <span class="option-key-badge">A</span>
+            <span class="option-text" id="mapChoiceText0">-</span>
+          </button>
+          <button class="btn-map-option" id="mapChoice1" data-index="1">
+            <span class="option-key-badge">B</span>
+            <span class="option-text" id="mapChoiceText1">-</span>
+          </button>
+          <button class="btn-map-option" id="mapChoice2" data-index="2">
+            <span class="option-key-badge">C</span>
+            <span class="option-text" id="mapChoiceText2">-</span>
+          </button>
+          <button class="btn-map-option" id="mapChoice3" data-index="3">
+            <span class="option-key-badge">D</span>
+            <span class="option-text" id="mapChoiceText3">-</span>
+          </button>
+        </div>
+
+      </section>
+    </div><!-- /mapView -->
 
   </div>
 
@@ -239,7 +317,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="data/states.js?v=3"></script>
-  <script src="app.js?v=3"></script>
+  <script src="data/states.js?v=4"></script>
+  <script src="data/us-map-template.js?v=4"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

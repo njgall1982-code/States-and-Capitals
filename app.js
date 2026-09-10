@@ -61,18 +61,63 @@
   const toggleHints = document.getElementById('toggleHints');
   const btnTriggerReset = document.getElementById('btnTriggerReset');
 
+  // DOM Elements - View Switcher & Panels
+  const tabFlashcards = document.getElementById('tabFlashcards');
+  const tabMapQuiz = document.getElementById('tabMapQuiz');
+  const cardsView = document.getElementById('cardsView');
+  const mapView = document.getElementById('mapView');
+
+  // DOM Elements - Map Arena
+  const mapSvgContainer = document.getElementById('mapSvgContainer');
+  const mapModeBadge = document.getElementById('mapModeBadge');
+  const mapStreakPill = document.getElementById('mapStreakPill');
+  const mapPromptQuestion = document.getElementById('mapPromptQuestion');
+  const mapChoiceBtns = [
+    document.getElementById('mapChoice0'),
+    document.getElementById('mapChoice1'),
+    document.getElementById('mapChoice2'),
+    document.getElementById('mapChoice3')
+  ];
+  const mapChoiceTexts = [
+    document.getElementById('mapChoiceText0'),
+    document.getElementById('mapChoiceText1'),
+    document.getElementById('mapChoiceText2'),
+    document.getElementById('mapChoiceText3')
+  ];
+  const mapFeedbackCard = document.getElementById('mapFeedbackCard');
+  const mapFeedbackIcon = document.getElementById('mapFeedbackIcon');
+  const mapFeedbackTitle = document.getElementById('mapFeedbackTitle');
+  const mapFeedbackSubtitle = document.getElementById('mapFeedbackSubtitle');
+  const mapFeedbackHook = document.getElementById('mapFeedbackHook');
+  const mapHookQuote = document.getElementById('mapHookQuote');
+  const mapHookKey = document.getElementById('mapHookKey');
+  const btnNextMapState = document.getElementById('btnNextMapState');
+
   // DOM Elements - Reset Modal
   const resetModal = document.getElementById('resetModal');
   const btnCancelReset = document.getElementById('btnCancelReset');
   const btnConfirmReset = document.getElementById('btnConfirmReset');
 
+  const STORAGE_KEY_ACTIVE_VIEW = 'states_capitals_active_view_v1';
+
   // Application State
   let progress = loadProgress();
   let settings = loadSettings();
+  let activeView = localStorage.getItem(STORAGE_KEY_ACTIVE_VIEW) || 'cards';
   let deck = [];
   let currentIndex = 0;
   let isFlipped = false;
   let cardDirectionCache = {};
+
+  // Map Quiz State
+  let mapDeck = [];
+  let mapIndex = 0;
+  let mapStreak = 0;
+  let currentMapState = null;
+  let currentMapChoices = [];
+  let currentMapRoundMode = 'state-first';
+  let isMapAnswered = false;
+  let isMapSvgLoaded = false;
 
   // Swipe & Touch variables
   let touchStartX = 0;
@@ -102,8 +147,16 @@
     syncSettingsUI();
     renderStats();
     renderCurrentCard();
+    initMapSvg();
+    initMapQuiz();
+    switchView(activeView);
     bindEvents();
     registerServiceWorker();
+
+    // Request persistent storage from browser (Safari iOS / Chrome)
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().catch(() => {});
+    }
   }
 
   // =========================================================================
@@ -557,6 +610,9 @@
       syncSettingsUI();
       renderStats();
       renderCurrentCard();
+      if (activeView === 'map' && !isMapAnswered) {
+        renderMapQuestion();
+      }
     });
 
     // Setting: Filter
@@ -587,6 +643,9 @@
       settings.hintsEnabled = toggleHints.checked;
       saveSettings();
       renderCurrentCard();
+      if (mapFeedbackCard.style.display !== 'none') {
+        mapFeedbackHook.style.display = settings.hintsEnabled ? 'flex' : 'none';
+      }
     });
 
     // Trigger Reset from Settings
@@ -603,36 +662,333 @@
       progress = {};
       saveProgress();
       resetModal.classList.remove('is-open');
+      mapStreak = 0;
+      mapStreakPill.textContent = '🔥 Streak: 0';
       renderStats();
       buildDeck();
       renderCurrentCard();
+      if (activeView === 'map') {
+        initMapQuiz();
+      }
     });
 
     resetModal.addEventListener('click', e => {
       if (e.target === resetModal) resetModal.classList.remove('is-open');
     });
 
+    // View Switcher Tabs
+    tabFlashcards.addEventListener('click', () => switchView('cards'));
+    tabMapQuiz.addEventListener('click', () => switchView('map'));
+
+    // Map Quiz Choice Buttons
+    mapChoiceBtns.forEach((btn, idx) => {
+      btn.addEventListener('click', () => handleMapChoice(idx));
+    });
+
+    // Next Map Question Button
+    btnNextMapState.addEventListener('click', advanceMapQuestion);
+
     // Keyboard Shortcuts (Magic Keyboard / Desktop)
     window.addEventListener('keydown', e => {
       if (settingsModal.classList.contains('is-open') || resetModal.classList.contains('is-open')) return;
 
-      if (e.code === 'Space') {
-        e.preventDefault();
-        toggleCardFlip();
-      } else if (e.code === 'ArrowRight') {
-        e.preventDefault();
-        markCard('known');
-      } else if (e.code === 'ArrowLeft') {
-        e.preventDefault();
-        markCard('missed');
-      } else if (e.code === 'ArrowUp') {
-        e.preventDefault();
-        prevCard();
-      } else if (e.code === 'ArrowDown') {
-        e.preventDefault();
-        nextCard();
+      if (activeView === 'cards') {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          toggleCardFlip();
+        } else if (e.code === 'ArrowRight') {
+          e.preventDefault();
+          markCard('known');
+        } else if (e.code === 'ArrowLeft') {
+          e.preventDefault();
+          markCard('missed');
+        } else if (e.code === 'ArrowUp') {
+          e.preventDefault();
+          prevCard();
+        } else if (e.code === 'ArrowDown') {
+          e.preventDefault();
+          nextCard();
+        }
+      } else if (activeView === 'map') {
+        if (['1', 'a', 'A'].includes(e.key)) {
+          e.preventDefault();
+          handleMapChoice(0);
+        } else if (['2', 'b', 'B'].includes(e.key)) {
+          e.preventDefault();
+          handleMapChoice(1);
+        } else if (['3', 'c', 'C'].includes(e.key)) {
+          e.preventDefault();
+          handleMapChoice(2);
+        } else if (['4', 'd', 'D'].includes(e.key)) {
+          e.preventDefault();
+          handleMapChoice(3);
+        } else if (['Enter', ' '].includes(e.key) && isMapAnswered) {
+          e.preventDefault();
+          advanceMapQuestion();
+        }
       }
     });
+  }
+
+  // =========================================================================
+  // View Switching (Flashcards vs Map Quiz)
+  // =========================================================================
+  function switchView(viewName) {
+    activeView = viewName;
+    try {
+      localStorage.setItem(STORAGE_KEY_ACTIVE_VIEW, viewName);
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
+
+    if (viewName === 'map') {
+      tabFlashcards.classList.remove('active');
+      tabFlashcards.setAttribute('aria-selected', 'false');
+      tabMapQuiz.classList.add('active');
+      tabMapQuiz.setAttribute('aria-selected', 'true');
+
+      cardsView.style.display = 'none';
+      mapView.style.display = 'flex';
+
+      if (!isMapSvgLoaded) {
+        initMapSvg();
+      }
+      if (!currentMapState) {
+        initMapQuiz();
+      }
+    } else {
+      tabMapQuiz.classList.remove('active');
+      tabMapQuiz.setAttribute('aria-selected', 'false');
+      tabFlashcards.classList.add('active');
+      tabFlashcards.setAttribute('aria-selected', 'true');
+
+      mapView.style.display = 'none';
+      cardsView.style.display = 'flex';
+    }
+  }
+
+  // =========================================================================
+  // Map Quiz Engine
+  // =========================================================================
+  function initMapSvg() {
+    if (window.US_MAP_SVG && mapSvgContainer) {
+      mapSvgContainer.innerHTML = window.US_MAP_SVG;
+      isMapSvgLoaded = true;
+
+      // Allow clicking highlighted state directly for visual feedback
+      const svg = mapSvgContainer.querySelector('.us-vector-map');
+      if (svg) {
+        svg.addEventListener('click', (e) => {
+          const path = e.target.closest('path[data-state-id]');
+          if (path && currentMapState && path.id === `state-${currentMapState.id}`) {
+            path.style.transform = 'scale(1.03)';
+            setTimeout(() => { path.style.transform = ''; }, 200);
+          }
+        });
+      }
+    }
+  }
+
+  function initMapQuiz() {
+    mapDeck = [...US_STATES];
+    shuffleArray(mapDeck);
+    mapIndex = 0;
+    mapStreak = 0;
+    mapStreakPill.textContent = '🔥 Streak: 0';
+    renderMapQuestion();
+  }
+
+  function getHardDistractors(targetState) {
+    const stateById = {};
+    US_STATES.forEach(s => { stateById[s.id] = s; });
+
+    // 1. Gather direct neighbors
+    const poolIds = new Set(targetState.neighbors || []);
+
+    // 2. If fewer than 3, add secondary neighbors (neighbors of neighbors)
+    if (poolIds.size < 3) {
+      (targetState.neighbors || []).forEach(nId => {
+        const neighbor = stateById[nId];
+        if (neighbor && neighbor.neighbors) {
+          neighbor.neighbors.forEach(nnId => {
+            if (nnId !== targetState.id) poolIds.add(nnId);
+          });
+        }
+      });
+    }
+
+    // 3. Fallback: fill with other states if needed
+    if (poolIds.size < 3) {
+      US_STATES.forEach(s => {
+        if (s.id !== targetState.id) poolIds.add(s.id);
+      });
+    }
+
+    // Filter out target state, shuffle and pick exactly 3
+    const candidates = Array.from(poolIds).filter(id => id !== targetState.id);
+    shuffleArray(candidates);
+    const chosenIds = candidates.slice(0, 3);
+
+    return chosenIds.map(id => stateById[id]);
+  }
+
+  function renderMapQuestion() {
+    if (!mapDeck.length) {
+      mapDeck = [...US_STATES];
+      shuffleArray(mapDeck);
+      mapIndex = 0;
+    }
+
+    if (mapIndex >= mapDeck.length) {
+      shuffleArray(mapDeck);
+      mapIndex = 0;
+    }
+
+    currentMapState = mapDeck[mapIndex];
+    isMapAnswered = false;
+
+    // Resolve question mode based on settings
+    let mode = settings.direction;
+    if (mode === 'random') {
+      mode = Math.random() < 0.5 ? 'state-first' : 'capital-first';
+    }
+    currentMapRoundMode = mode;
+
+    // Update prompt
+    if (mode === 'state-first') {
+      mapModeBadge.textContent = '🗺️ Name the State';
+      mapPromptQuestion.textContent = 'What state is highlighted on the map?';
+    } else {
+      mapModeBadge.textContent = '⭐ Name the Capital';
+      mapPromptQuestion.textContent = 'What is the capital of this highlighted state?';
+    }
+
+    // Reset feedback card
+    mapFeedbackCard.style.display = 'none';
+
+    // Highlight map path
+    if (isMapSvgLoaded) {
+      const allStatePaths = mapSvgContainer.querySelectorAll('.us-vector-map path[data-state-id]');
+      allStatePaths.forEach(p => {
+        p.classList.remove('state-active', 'state-correct', 'state-incorrect');
+        const stateCode = p.dataset.stateId;
+        const stateObj = US_STATES.find(s => s.id === stateCode);
+        if (stateObj && progress[stateObj.state] === 'known') {
+          p.classList.add('state-conquered');
+        } else {
+          p.classList.remove('state-conquered');
+        }
+      });
+
+      const targetPath = document.getElementById(`state-${currentMapState.id}`);
+      if (targetPath) {
+        targetPath.classList.add('state-active');
+      }
+    }
+
+    // Generate hard choices using real neighbors
+    const distractors = getHardDistractors(currentMapState);
+    const allFour = [currentMapState, ...distractors];
+
+    currentMapChoices = allFour.map(s => ({
+      stateObj: s,
+      label: mode === 'state-first' ? s.state : s.capital,
+      isCorrect: s.id === currentMapState.id
+    }));
+    shuffleArray(currentMapChoices);
+
+    // Render choice buttons
+    mapChoiceBtns.forEach((btn, i) => {
+      btn.disabled = false;
+      btn.classList.remove('is-correct', 'is-wrong');
+      const textEl = mapChoiceTexts[i];
+      if (textEl && currentMapChoices[i]) {
+        textEl.textContent = currentMapChoices[i].label;
+      }
+    });
+  }
+
+  function handleMapChoice(index) {
+    if (isMapAnswered || !currentMapChoices[index]) return;
+    isMapAnswered = true;
+
+    // Disable buttons
+    mapChoiceBtns.forEach(btn => {
+      btn.disabled = true;
+    });
+
+    const chosen = currentMapChoices[index];
+    const targetPath = document.getElementById(`state-${currentMapState.id}`);
+    if (targetPath) {
+      targetPath.classList.remove('state-active');
+    }
+
+    if (chosen.isCorrect) {
+      if (targetPath) {
+        targetPath.classList.remove('state-conquered');
+        targetPath.classList.add('state-correct');
+      }
+      mapChoiceBtns[index].classList.add('is-correct');
+      mapStreak++;
+      mapStreakPill.textContent = `🔥 Streak: ${mapStreak}`;
+
+      // Automatically register progress as Mastered
+      progress[currentMapState.state] = 'known';
+      saveProgress();
+      renderStats();
+
+      mapFeedbackIcon.textContent = '✅';
+      mapFeedbackTitle.textContent = 'Correct!';
+      if (currentMapRoundMode === 'state-first') {
+        mapFeedbackSubtitle.textContent = `That's ${currentMapState.state}! Its capital is ${currentMapState.capital}.`;
+      } else {
+        mapFeedbackSubtitle.textContent = `${currentMapState.capital} is the capital of ${currentMapState.state}!`;
+      }
+    } else {
+      if (targetPath) {
+        targetPath.classList.remove('state-conquered');
+        targetPath.classList.add('state-incorrect');
+      }
+      mapChoiceBtns[index].classList.add('is-wrong');
+
+      // Highlight the correct one
+      const correctIdx = currentMapChoices.findIndex(c => c.isCorrect);
+      if (correctIdx !== -1) {
+        mapChoiceBtns[correctIdx].classList.add('is-correct');
+      }
+
+      mapStreak = 0;
+      mapStreakPill.textContent = 'Streak: 0';
+
+      // Automatically register progress as Need Practice
+      progress[currentMapState.state] = 'missed';
+      saveProgress();
+      renderStats();
+
+      mapFeedbackIcon.textContent = '❌';
+      mapFeedbackTitle.textContent = 'Not quite!';
+      if (currentMapRoundMode === 'state-first') {
+        mapFeedbackSubtitle.textContent = `The highlighted state is ${currentMapState.state} (Capital: ${currentMapState.capital}).`;
+      } else {
+        mapFeedbackSubtitle.textContent = `The capital of ${currentMapState.state} is ${currentMapState.capital}.`;
+      }
+    }
+
+    // Display Memory Hook if enabled
+    if (settings.hintsEnabled && currentMapState.hook) {
+      mapFeedbackHook.style.display = 'flex';
+      mapHookQuote.textContent = `"${currentMapState.hook}"`;
+      mapHookKey.textContent = currentMapState.key;
+    } else {
+      mapFeedbackHook.style.display = 'none';
+    }
+
+    mapFeedbackCard.style.display = 'flex';
+  }
+
+  function advanceMapQuestion() {
+    mapIndex++;
+    renderMapQuestion();
   }
 
   // =========================================================================

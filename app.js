@@ -69,6 +69,18 @@
   const cardsView = document.getElementById('cardsView');
   const mapView = document.getElementById('mapView');
 
+  // DOM Elements - Left Rail Sidebar
+  const sidebarNavCards = document.getElementById('sidebarNavCards');
+  const sidebarNavMap = document.getElementById('sidebarNavMap');
+  const sidebarNavArena = document.getElementById('sidebarNavArena');
+  const sidebarNavBinder = document.getElementById('sidebarNavBinder');
+  const sidebarNavLadder = document.getElementById('sidebarNavLadder');
+  const sidebarBtnPacks = document.getElementById('sidebarBtnPacks');
+  const sidebarBtnVault = document.getElementById('sidebarBtnVault');
+  const sidebarBtnSettings = document.getElementById('sidebarBtnSettings');
+  const sidebarPackBadge = document.getElementById('sidebarPackBadge');
+  const sidebarDeckCountBadge = document.getElementById('sidebarDeckCountBadge');
+
   // DOM Elements - Map Arena
   const mapSvgContainer = document.getElementById('mapSvgContainer');
   const mapModeBadge = document.getElementById('mapModeBadge');
@@ -132,7 +144,7 @@
   const STORAGE_KEY_PENDING_PACKS = 'states_clash_packs_v1';
   const STORAGE_KEY_CHALLENGER_STAGE = 'states_clash_stage_v1';
   const STORAGE_KEY_DEFEATED_CHALLENGERS = 'states_clash_defeated_v1';
-  const CURRENT_CACHE_VERSION = 'states-capitals-v11';
+  const CURRENT_CACHE_VERSION = 'states-capitals-v14';
 
   // DOM Elements - Battle Arena & Pack System
   const tabBattleArena = document.getElementById('tabBattleArena');
@@ -153,19 +165,23 @@
   const arenaOpponentName = document.getElementById('arenaOpponentName');
   const arenaOpponentTitle = document.getElementById('arenaOpponentTitle');
   const btnChangeOpponent = document.getElementById('btnChangeOpponent');
-  const arenaPlayerScore = document.getElementById('arenaPlayerScore');
-  const arenaAiScore = document.getElementById('arenaAiScore');
-  const arenaRoundDots = document.getElementById('arenaRoundDots');
-  const aiSlotPlaceholder = document.getElementById('aiSlotPlaceholder');
-  const aiCardMount = document.getElementById('aiCardMount');
-  const playerSlotPlaceholder = document.getElementById('playerSlotPlaceholder');
-  const playerCardMount = document.getElementById('playerCardMount');
-  const clashVsBadge = document.getElementById('clashVsBadge');
-  const clashResultBanner = document.getElementById('clashResultBanner');
-  const clashResultTitle = document.getElementById('clashResultTitle');
-  const clashResultDesc = document.getElementById('clashResultDesc');
-  const btnClashAction = document.getElementById('btnClashAction');
+  const playerNodesWon = document.getElementById('playerNodesWon');
+  const aiNodesWon = document.getElementById('aiNodesWon');
+  const arenaRoundPhase = document.getElementById('arenaRoundPhase');
+  const arenaTurnInstruction = document.getElementById('arenaTurnInstruction');
+  const arenaLanesBoard = document.getElementById('arenaLanesBoard');
+  const arenaHandInstruction = document.getElementById('arenaHandInstruction');
+  const btnShowdownAction = document.getElementById('btnShowdownAction');
   const arenaHandGrid = document.getElementById('arenaHandGrid');
+
+  // Math Supercharge Elements
+  const mathChallengeModal = document.getElementById('mathChallengeModal');
+  const mathChallengeBadge = document.getElementById('mathChallengeBadge');
+  const mathTimerCount = document.getElementById('mathTimerCount');
+  const mathChallengeContext = document.getElementById('mathChallengeContext');
+  const mathQuestionText = document.getElementById('mathQuestionText');
+  const mathOptionsGrid = document.getElementById('mathOptionsGrid');
+  const btnSkipMath = document.getElementById('btnSkipMath');
 
   const arenaMatchOverlay = document.getElementById('arenaMatchOverlay');
   const matchOverlayIcon = document.getElementById('matchOverlayIcon');
@@ -1110,10 +1126,62 @@
       });
     }
 
-    // View Switcher Tabs
-    tabFlashcards.addEventListener('click', () => switchView('cards'));
-    tabMapQuiz.addEventListener('click', () => switchView('map'));
+    // View Switcher Tabs (Legacy fallback if present)
+    if (tabFlashcards) tabFlashcards.addEventListener('click', () => switchView('cards'));
+    if (tabMapQuiz) tabMapQuiz.addEventListener('click', () => switchView('map'));
     if (tabBattleArena) tabBattleArena.addEventListener('click', () => switchView('battle'));
+
+    // Sidebar Navigation Buttons
+    if (sidebarNavCards) {
+      sidebarNavCards.addEventListener('click', () => switchView('cards'));
+    }
+    if (sidebarNavMap) {
+      sidebarNavMap.addEventListener('click', () => switchView('map'));
+    }
+    if (sidebarNavArena) {
+      sidebarNavArena.addEventListener('click', () => {
+        battleSubPanel = 'match';
+        switchView('battle');
+        if (!activeMatch || activeMatch.matchFinished) {
+          initMatch(currentChallengerId);
+        }
+        renderBattleArena();
+      });
+    }
+    if (sidebarNavBinder) {
+      sidebarNavBinder.addEventListener('click', () => {
+        battleSubPanel = 'binder';
+        switchView('battle');
+        renderBattleArena();
+      });
+    }
+    if (sidebarNavLadder) {
+      sidebarNavLadder.addEventListener('click', () => {
+        battleSubPanel = 'ladder';
+        switchView('battle');
+        renderBattleArena();
+      });
+    }
+
+    // Sidebar Utility Actions
+    if (sidebarBtnPacks) {
+      sidebarBtnPacks.addEventListener('click', () => {
+        openPackModal('📦 UNOPENED BOOSTER PACKS');
+      });
+    }
+    if (sidebarBtnVault) {
+      sidebarBtnVault.addEventListener('click', () => {
+        let knownCount = 0;
+        US_STATES.forEach(s => { if (progressMap[s.state] === 'known') knownCount++; });
+        updateRankAndVaultUI(knownCount);
+        if (vaultModal) vaultModal.classList.add('is-open');
+      });
+    }
+    if (sidebarBtnSettings) {
+      sidebarBtnSettings.addEventListener('click', () => {
+        if (settingsModal) settingsModal.classList.add('is-open');
+      });
+    }
 
     // Map Quiz Choice Buttons
     mapChoiceBtns.forEach((btn, idx) => {
@@ -1179,6 +1247,20 @@
   // =========================================================================
   // View Switching (Flashcards vs Map Quiz vs Battle Arena)
   // =========================================================================
+  function updateSidebarNav() {
+    if (sidebarNavCards) sidebarNavCards.classList.toggle('active', activeView === 'cards');
+    if (sidebarNavMap) sidebarNavMap.classList.toggle('active', activeView === 'map');
+    if (sidebarNavArena) sidebarNavArena.classList.toggle('active', activeView === 'battle' && battleSubPanel === 'match');
+    if (sidebarNavBinder) sidebarNavBinder.classList.toggle('active', activeView === 'battle' && battleSubPanel === 'binder');
+    if (sidebarNavLadder) sidebarNavLadder.classList.toggle('active', activeView === 'battle' && battleSubPanel === 'ladder');
+
+    if (activeView === 'battle') {
+      document.body.classList.add('view-battle-active');
+    } else {
+      document.body.classList.remove('view-battle-active');
+    }
+  }
+
   function switchView(viewName) {
     activeView = viewName;
     try {
@@ -1188,18 +1270,22 @@
     }
 
     if (viewName === 'map') {
-      tabFlashcards.classList.remove('active');
-      tabFlashcards.setAttribute('aria-selected', 'false');
+      if (tabFlashcards) {
+        tabFlashcards.classList.remove('active');
+        tabFlashcards.setAttribute('aria-selected', 'false');
+      }
       if (tabBattleArena) {
         tabBattleArena.classList.remove('active');
         tabBattleArena.setAttribute('aria-selected', 'false');
       }
-      tabMapQuiz.classList.add('active');
-      tabMapQuiz.setAttribute('aria-selected', 'true');
+      if (tabMapQuiz) {
+        tabMapQuiz.classList.add('active');
+        tabMapQuiz.setAttribute('aria-selected', 'true');
+      }
 
-      cardsView.style.display = 'none';
+      if (cardsView) cardsView.style.display = 'none';
       if (battleView) battleView.style.display = 'none';
-      mapView.style.display = 'flex';
+      if (mapView) mapView.style.display = 'flex';
 
       if (!isMapSvgLoaded) {
         initMapSvg();
@@ -1212,34 +1298,43 @@
         }, 80);
       }
     } else if (viewName === 'battle') {
-      tabFlashcards.classList.remove('active');
-      tabFlashcards.setAttribute('aria-selected', 'false');
-      tabMapQuiz.classList.remove('active');
-      tabMapQuiz.setAttribute('aria-selected', 'false');
+      if (tabFlashcards) {
+        tabFlashcards.classList.remove('active');
+        tabFlashcards.setAttribute('aria-selected', 'false');
+      }
+      if (tabMapQuiz) {
+        tabMapQuiz.classList.remove('active');
+        tabMapQuiz.setAttribute('aria-selected', 'false');
+      }
       if (tabBattleArena) {
         tabBattleArena.classList.add('active');
         tabBattleArena.setAttribute('aria-selected', 'true');
       }
 
-      cardsView.style.display = 'none';
-      mapView.style.display = 'none';
+      if (cardsView) cardsView.style.display = 'none';
+      if (mapView) mapView.style.display = 'none';
       if (battleView) battleView.style.display = 'flex';
 
       renderBattleArena();
     } else {
-      tabMapQuiz.classList.remove('active');
-      tabMapQuiz.setAttribute('aria-selected', 'false');
+      if (tabMapQuiz) {
+        tabMapQuiz.classList.remove('active');
+        tabMapQuiz.setAttribute('aria-selected', 'false');
+      }
       if (tabBattleArena) {
         tabBattleArena.classList.remove('active');
         tabBattleArena.setAttribute('aria-selected', 'false');
       }
-      tabFlashcards.classList.add('active');
-      tabFlashcards.setAttribute('aria-selected', 'true');
+      if (tabFlashcards) {
+        tabFlashcards.classList.add('active');
+        tabFlashcards.setAttribute('aria-selected', 'true');
+      }
 
-      mapView.style.display = 'none';
+      if (mapView) mapView.style.display = 'none';
       if (battleView) battleView.style.display = 'none';
-      cardsView.style.display = 'flex';
+      if (cardsView) cardsView.style.display = 'flex';
     }
+    updateSidebarNav();
     renderStats();
   }
 
@@ -1709,6 +1804,15 @@
       }
     }
 
+    if (sidebarPackBadge) {
+      if (pendingPacks > 0) {
+        sidebarPackBadge.textContent = pendingPacks;
+        sidebarPackBadge.style.display = 'flex';
+      } else {
+        sidebarPackBadge.style.display = 'none';
+      }
+    }
+
     if (navPackBadge) {
       if (pendingPacks > 0) {
         navPackBadge.textContent = pendingPacks;
@@ -1720,6 +1824,10 @@
 
     if (binderDeckCountPill) {
       binderDeckCountPill.textContent = `${battleDeck.length}/5`;
+    }
+
+    if (sidebarDeckCountBadge) {
+      sidebarDeckCountBadge.textContent = `${battleDeck.length}/5`;
     }
 
     if (packRemainingPill) {
@@ -1757,16 +1865,223 @@
 
   function getCardEffectivePower(cardId, deckIds = battleDeck) {
     const card = typeof BATTLE_CARDS_MAP !== 'undefined' ? BATTLE_CARDS_MAP[cardId] : null;
-    if (!card) return 70;
+    if (!card) return 3;
 
     const entry = cardCollection[cardId];
     const stars = entry ? entry.stars : 1;
-    const starBonus = stars === 2 ? 3 : stars === 3 ? 6 : 0;
+    const starBonus = stars === 2 ? 1 : stars === 3 ? 2 : 0;
 
     const synergies = calculateActiveSynergies(deckIds);
     const synergyBonus = synergies.has(card.stateId) ? 2 : 0;
 
     return card.power + starBonus + synergyBonus;
+  }
+
+  function calculateCardNodePower(cardId, node, deckIds, side, mathBonus = 0) {
+    const card = typeof BATTLE_CARDS_MAP !== 'undefined' ? BATTLE_CARDS_MAP[cardId] : null;
+    if (!card) return 3;
+
+    let power = card.power; // 1-5 base
+
+    if (side === 'player') {
+      const entry = cardCollection[cardId];
+      const stars = entry ? entry.stars : 1;
+      power += (stars === 2 ? 1 : stars === 3 ? 2 : 0);
+    }
+
+    // Node Biome Bonus (+2)
+    if (node && node.bonusBiome && node.bonusBiome === card.biome) {
+      power += (node.bonusPower || 2);
+    } else if (node && node.bonusKind && node.bonusKind === card.kind) {
+      power += (node.bonusPower || 1);
+    }
+
+    // Underdog Biome Perk (+3 on matching node biome)
+    if (card.perkBonus && node && card.perkCondition === node.biome) {
+      power += card.perkBonus;
+    }
+
+    // 5th Grade Math Supercharge (+1)
+    power += mathBonus;
+
+    return power;
+  }
+
+  // Web Audio Synth for tactile kid-friendly audio feedback
+  function playAudioCue(type) {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'correct') {
+        // High ascending chime
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.15); // G5
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if (type === 'synergy') {
+        // Glorious triumphant chord
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, now); // D5
+        osc.frequency.exponentialRampToValueAtTime(880.00, now + 0.2); // A5
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      } else if (type === 'drop') {
+        // Soft pop
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(280, now);
+        osc.frequency.exponentialRampToValueAtTime(140, now + 0.1);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      } else if (type === 'showdown') {
+        // Dramatic fanfare sweep
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 0.3);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc.start(now);
+        osc.stop(now + 0.45);
+      }
+    } catch (e) {
+      // Audio autoplay policy fallback
+    }
+  }
+
+  function playMathSparkEffect(anchorEl) {
+    playAudioCue('correct');
+    const badge = document.createElement('div');
+    badge.className = 'floating-boost-badge';
+    badge.textContent = '⚡ +1 POWER BOOST!';
+    badge.style.left = '50%';
+    badge.style.top = '40%';
+    badge.style.transform = 'translate(-50%, -50%)';
+    document.body.appendChild(badge);
+    setTimeout(() => {
+      badge.remove();
+    }, 1300);
+  }
+
+  function playSynergySparkEffect(nodeName) {
+    playAudioCue('synergy');
+    const badge = document.createElement('div');
+    badge.className = 'floating-boost-badge';
+    badge.style.background = 'linear-gradient(135deg, #f59e0b 0%, #b45309 100%)';
+    badge.style.borderColor = '#fbbf24';
+    badge.style.color = '#ffffff';
+    badge.style.boxShadow = '0 0 24px rgba(245, 158, 11, 0.8)';
+    badge.innerHTML = `✨ CAPITAL CONNECTION!<br><span style="font-size:0.75rem; font-weight:700;">State + Capital Paired on ${nodeName} (+2 each!)</span>`;
+    badge.style.left = '50%';
+    badge.style.top = '35%';
+    badge.style.textAlign = 'center';
+    badge.style.transform = 'translate(-50%, -50%)';
+    document.body.appendChild(badge);
+    setTimeout(() => {
+      badge.remove();
+    }, 1700);
+  }
+
+  let mathTimerInterval = null;
+
+  function triggerMathChallenge(contextDesc, gapValue = null, onComplete) {
+    if (!mathChallengeModal) {
+      if (onComplete) onComplete(0);
+      return;
+    }
+
+    clearInterval(mathTimerInterval);
+    mathChallengeModal.style.display = 'flex';
+
+    let questionText = '';
+    let correctVal = 0;
+    let options = [];
+
+    if (gapValue !== null && gapValue > 0) {
+      // 5th Grade Subtraction Gap Question
+      if (mathChallengeBadge) mathChallengeBadge.textContent = '⚡ 5TH GRADE GAP CALCULATION';
+      if (mathChallengeContext) mathChallengeContext.textContent = contextDesc || 'Calculate the difference to tie or take the lead!';
+      correctVal = gapValue;
+      questionText = `Point Gap: ${correctVal} needed! What is ${correctVal + 5} - 5?`;
+      // Generate multiple choice options around correctVal
+      options = [correctVal, correctVal + 1, Math.max(1, correctVal - 1)];
+    } else {
+      // 5th Grade Multiplication Supercharge (Tables 4 to 9)
+      if (mathChallengeBadge) mathChallengeBadge.textContent = '⚡ 5TH GRADE POWER BOOST';
+      if (mathChallengeContext) mathChallengeContext.textContent = contextDesc || 'Solve in 10s to supercharge your card with +1 Power!';
+      const tablePool = [4, 5, 6, 7, 8, 9];
+      const a = tablePool[Math.floor(Math.random() * tablePool.length)];
+      const b = [3, 4, 6, 7, 8, 9][Math.floor(Math.random() * 6)];
+      correctVal = a * b;
+      questionText = `${a} × ${b} = ?`;
+      options = [correctVal, correctVal + a, Math.max(2, correctVal - b)];
+    }
+
+    // Shuffle unique options
+    options = Array.from(new Set(options));
+    while (options.length < 3) options.push(correctVal + options.length + 2);
+    options.sort(() => Math.random() - 0.5);
+
+    if (mathQuestionText) mathQuestionText.textContent = questionText;
+
+    if (mathOptionsGrid) {
+      mathOptionsGrid.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-math-option';
+        btn.textContent = opt;
+        btn.onclick = () => {
+          clearInterval(mathTimerInterval);
+          const isCorrect = (opt === correctVal);
+          btn.classList.add(isCorrect ? 'math-correct' : 'math-wrong');
+
+          if (isCorrect) {
+            playMathSparkEffect();
+          }
+
+          setTimeout(() => {
+            mathChallengeModal.style.display = 'none';
+            if (onComplete) onComplete(isCorrect ? 1 : 0);
+          }, 450);
+        };
+        mathOptionsGrid.appendChild(btn);
+      });
+    }
+
+    // 10s Timer
+    let timeLeft = 10;
+    if (mathTimerCount) mathTimerCount.textContent = timeLeft;
+    mathTimerInterval = setInterval(() => {
+      timeLeft--;
+      if (mathTimerCount) mathTimerCount.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(mathTimerInterval);
+        mathChallengeModal.style.display = 'none';
+        if (onComplete) onComplete(0);
+      }
+    }, 1000);
+
+    if (btnSkipMath) {
+      btnSkipMath.onclick = () => {
+        clearInterval(mathTimerInterval);
+        mathChallengeModal.style.display = 'none';
+        if (onComplete) onComplete(0);
+      };
+    }
   }
 
   function createCardElement(cardId, options = {}) {
@@ -1805,7 +2120,7 @@
       </div>
       <div class="bcard-footer">
         <span class="bcard-biome-name">${biomeObj.name}</span>
-        ${hasSynergy ? '<span class="bcard-synergy-indicator" title="Home State + Capital Synergy (+2 Power)">✨ Synergy</span>' : `<span style="color: var(--text-subtle);">${card.perk || ''}</span>`}
+        ${hasSynergy ? '<span class="bcard-synergy-indicator" title="Home State + Capital Synergy: Pair on same lane for +2 Power!">✨ Synergy</span>' : `<span style="color: var(--text-subtle);">${card.perk || ''}</span>`}
       </div>
     `;
 
@@ -1822,6 +2137,9 @@
     if (btnSubNavMatch) btnSubNavMatch.classList.toggle('active', battleSubPanel === 'match');
     if (btnSubNavBinder) btnSubNavBinder.classList.toggle('active', battleSubPanel === 'binder');
     if (btnSubNavLadder) btnSubNavLadder.classList.toggle('active', battleSubPanel === 'ladder');
+
+    // Update Left Sidebar Rail selection state
+    updateSidebarNav();
 
     if (battleSubPanel === 'match') {
       if (!activeMatch || activeMatch.matchFinished) {
@@ -1843,15 +2161,42 @@
     currentChallengerId = challenger.id;
     saveChallengerStage();
 
+    const nodeCount = challenger.nodeCount || 3;
+    let selectedNodesData = [];
+
+    if (typeof BATTLE_NODES !== 'undefined' && BATTLE_NODES.length > 0) {
+      if (nodeCount === 2) {
+        selectedNodesData = [BATTLE_NODES[0], BATTLE_NODES[1]]; // Rocky + Pacific
+      } else {
+        selectedNodesData = [BATTLE_NODES[0], BATTLE_NODES[1], BATTLE_NODES[2]];
+      }
+    } else {
+      selectedNodesData = [
+        { id: 'node_1', name: 'Rocky Ridge', biome: 'mountain', icon: '⛰️', bonusBiome: 'mountain', bonusPower: 2, desc: 'Mountain +2' },
+        { id: 'node_2', name: 'Pacific Bay', biome: 'coast', icon: '🌊', bonusBiome: 'coast', bonusPower: 2, desc: 'Coast +2' },
+        { id: 'node_3', name: 'Heartland Plains', biome: 'heartland', icon: '🌾', bonusBiome: 'heartland', bonusPower: 2, desc: 'Heartland +2' }
+      ];
+    }
+
+    const activeNodes = selectedNodesData.map(node => ({
+      ...node,
+      aiCards: [],
+      playerCards: [],
+      aiScore: 0,
+      playerScore: 0,
+      winner: null
+    }));
+
     activeMatch = {
       challenger,
-      round: 1,
-      playerScore: 0,
-      aiScore: 0,
+      nodeCount,
+      nodes: activeNodes,
+      round: 1, // 1, 2, or 3
+      roundPlaysMade: 0, // Track plays within current round (Option A: R1=1, R2=2, R3=2)
+      phase: 'ai_thinking', // 'ai_thinking' | 'player_turn' | 'blind_prep' | 'blind_ready' | 'finished'
       playerRemainingDeck: [...battleDeck],
       aiRemainingDeck: [...challenger.deck],
       selectedCardId: null,
-      isClashing: false,
       matchFinished: false
     };
 
@@ -1860,53 +2205,278 @@
     if (arenaOpponentTitle) arenaOpponentTitle.textContent = `${challenger.title} • ${challenger.badge}`;
 
     if (arenaMatchOverlay) arenaMatchOverlay.style.display = 'none';
-    if (clashResultBanner) clashResultBanner.style.display = 'none';
+    if (btnShowdownAction) btnShowdownAction.style.display = 'none';
 
+    recalculateNodeScores();
     renderMatchUI();
+
+    // Computer goes first!
+    setTimeout(() => {
+      executeAiTurn();
+    }, 600);
+  }
+
+  function getRequiredPlaysForRound(round, nodeCount) {
+    // Stage 1 (2 nodes = 4 total slots): 1 in R1, 1 in R2, 2 in R3
+    if (nodeCount === 2) {
+      return round === 3 ? 2 : 1;
+    }
+    // Standard (3 nodes = 6 total slots): 1 in R1, 2 in R2, 2 in R3 (All 5 cards played!)
+    if (round === 1) return 1;
+    if (round === 2) return 2;
+    return 2;
+  }
+
+  function executeAiTurn() {
+    if (!activeMatch || activeMatch.matchFinished) return;
+
+    const cardsToPlay = getRequiredPlaysForRound(activeMatch.round, activeMatch.nodeCount);
+
+    if (activeMatch.round <= 2) {
+      // Round 1 or 2: AI plays required number of cards face up (1 in R1, 2 in R2)
+      for (let i = 0; i < cardsToPlay; i++) {
+        const aiDeck = activeMatch.aiRemainingDeck;
+        if (aiDeck.length === 0) break;
+
+        const openNodes = activeMatch.nodes.filter(n => n.aiCards.length < 2);
+        if (openNodes.length === 0) break;
+
+        let targetNode = openNodes[0];
+        let chosenCardId = aiDeck[0];
+
+        // Preference: match node bonus biome
+        for (const node of openNodes) {
+          const matchCard = aiDeck.find(id => {
+            const c = BATTLE_CARDS_MAP[id];
+            return c && c.biome === node.bonusBiome;
+          });
+          if (matchCard) {
+            chosenCardId = matchCard;
+            targetNode = node;
+            break;
+          }
+        }
+
+        const power = calculateCardNodePower(chosenCardId, targetNode, activeMatch.challenger.deck, 'ai', 0);
+        targetNode.aiCards.push({
+          cardId: chosenCardId,
+          effectivePower: power,
+          isFaceDown: false
+        });
+
+        activeMatch.aiRemainingDeck = activeMatch.aiRemainingDeck.filter(id => id !== chosenCardId);
+      }
+
+      activeMatch.phase = 'player_turn';
+      activeMatch.roundPlaysMade = 0;
+
+      playAudioCue('drop');
+      recalculateNodeScores();
+      renderMatchUI();
+
+    } else if (activeMatch.round === 3) {
+      // Round 3 (The Grand Double Showdown): AI places remaining 2 cards FACE DOWN
+      const aiDeck = activeMatch.aiRemainingDeck;
+      const countToDrop = Math.min(cardsToPlay, aiDeck.length);
+
+      for (let i = 0; i < countToDrop; i++) {
+        const openNodes = activeMatch.nodes.filter(n => n.aiCards.length < 2);
+        const targetNode = openNodes[i % openNodes.length] || activeMatch.nodes[0];
+        const chosenCardId = activeMatch.aiRemainingDeck[0];
+
+        targetNode.aiCards.push({
+          cardId: chosenCardId,
+          effectivePower: 0,
+          isFaceDown: true
+        });
+
+        activeMatch.aiRemainingDeck = activeMatch.aiRemainingDeck.filter(id => id !== chosenCardId);
+      }
+
+      activeMatch.phase = 'blind_prep';
+      activeMatch.roundPlaysMade = 0;
+
+      playAudioCue('drop');
+      recalculateNodeScores();
+      renderMatchUI();
+    }
+  }
+
+  function recalculateNodeScores() {
+    if (!activeMatch) return;
+    let playerTotalWins = 0;
+    let aiTotalWins = 0;
+
+    activeMatch.nodes.forEach(node => {
+      // Player score calculation
+      let pScore = 0;
+      const playerCardObjs = node.playerCards.map(c => BATTLE_CARDS_MAP[c.cardId]).filter(Boolean);
+      const pStateMap = {};
+      playerCardObjs.forEach(c => { pStateMap[c.stateId] = (pStateMap[c.stateId] || 0) + 1; });
+
+      node.playerCards.forEach(pc => {
+        if (pc.isFaceDown) return;
+        let p = pc.effectivePower;
+        const c = BATTLE_CARDS_MAP[pc.cardId];
+        // Capital Synergy: State + Capital pair on the SAME node grants +2 to both!
+        if (c && pStateMap[c.stateId] >= 2) {
+          p += 2;
+          pc.hasSynergy = true;
+        } else {
+          pc.hasSynergy = false;
+        }
+        pScore += p;
+      });
+      node.playerScore = pScore;
+
+      // AI score calculation
+      let aScore = 0;
+      const aiCardObjs = node.aiCards.map(c => BATTLE_CARDS_MAP[c.cardId]).filter(Boolean);
+      const aStateMap = {};
+      aiCardObjs.forEach(c => { aStateMap[c.stateId] = (aStateMap[c.stateId] || 0) + 1; });
+
+      node.aiCards.forEach(ac => {
+        if (ac.isFaceDown) return;
+        let p = ac.effectivePower;
+        const c = BATTLE_CARDS_MAP[ac.cardId];
+        if (c && aStateMap[c.stateId] >= 2) {
+          p += 2;
+          ac.hasSynergy = true;
+        } else {
+          ac.hasSynergy = false;
+        }
+        aScore += p;
+      });
+      node.aiScore = aScore;
+
+      // Winner determination
+      if (node.playerScore > node.aiScore) {
+        node.winner = 'player';
+        playerTotalWins++;
+      } else if (node.aiScore > node.playerScore) {
+        node.winner = 'ai';
+        aiTotalWins++;
+      } else {
+        node.winner = 'tie';
+      }
+    });
+
+    if (playerNodesWon) playerNodesWon.textContent = playerTotalWins;
+    if (aiNodesWon) aiNodesWon.textContent = aiTotalWins;
   }
 
   function renderMatchUI() {
     if (!activeMatch) return;
 
-    if (arenaPlayerScore) arenaPlayerScore.textContent = activeMatch.playerScore;
-    if (arenaAiScore) arenaAiScore.textContent = activeMatch.aiScore;
+    const targetPlays = getRequiredPlaysForRound(activeMatch.round, activeMatch.nodeCount);
+    const playsLeftThisRound = Math.max(0, targetPlays - activeMatch.roundPlaysMade);
 
-    // Update Round Dots
-    if (arenaRoundDots) {
-      const dots = arenaRoundDots.querySelectorAll('.round-dot');
-      dots.forEach((dot, idx) => {
-        const roundNum = idx + 1;
-        dot.classList.remove('active');
-        if (roundNum === activeMatch.round && !activeMatch.matchFinished) {
-          dot.classList.add('active');
+    // Update Round Tracker
+    if (arenaRoundPhase && arenaTurnInstruction) {
+      if (activeMatch.round === 1) {
+        arenaRoundPhase.textContent = 'Round 1 of 3: Opening Moves';
+        arenaTurnInstruction.textContent = activeMatch.phase === 'ai_thinking'
+          ? `${activeMatch.challenger.name} is choosing an opening landmark...`
+          : `${activeMatch.challenger.name} made their opening move! Place 1 card to match.`;
+      } else if (activeMatch.round === 2) {
+        arenaRoundPhase.textContent = 'Round 2 of 3: Travel Reinforcements (2 Cards)';
+        arenaTurnInstruction.textContent = activeMatch.phase === 'ai_thinking'
+          ? `${activeMatch.challenger.name} is placing 2 cards...`
+          : (playsLeftThisRound === 2 
+              ? `${activeMatch.challenger.name} placed 2 cards! Place your 1st card.` 
+              : 'Great choice! Now place your 2nd card.');
+      } else if (activeMatch.round === 3) {
+        arenaRoundPhase.textContent = '🌟 Round 3: THE SECRET DESTINATION SHOWDOWN';
+        if (activeMatch.phase === 'blind_prep') {
+          arenaTurnInstruction.textContent = playsLeftThisRound === 2
+            ? `${activeMatch.challenger.name} placed 2 secret cards! Place your 1st secret card.`
+            : '1 secret card locked in! Place your final card at any open stop.';
+        } else if (activeMatch.phase === 'blind_ready') {
+          arenaTurnInstruction.textContent = 'All 5 cards placed! Tap REVEAL DESTINATIONS to see who won each landmark!';
         }
-      });
-    }
-
-    // AI Card Slot Placeholder vs Mount
-    if (aiCardMount && aiSlotPlaceholder) {
-      aiCardMount.innerHTML = '';
-      aiCardMount.style.display = 'none';
-      aiSlotPlaceholder.style.display = 'flex';
-    }
-
-    // Player Card Slot
-    if (playerCardMount && playerSlotPlaceholder) {
-      playerCardMount.innerHTML = '';
-      if (activeMatch.selectedCardId) {
-        playerSlotPlaceholder.style.display = 'none';
-        playerCardMount.style.display = 'flex';
-        const cardEl = createCardElement(activeMatch.selectedCardId, { activeDeck: battleDeck });
-        playerCardMount.appendChild(cardEl);
-      } else {
-        playerSlotPlaceholder.style.display = 'flex';
-        playerCardMount.style.display = 'none';
       }
     }
 
-    // Clash Button State
-    if (btnClashAction) {
-      btnClashAction.disabled = !activeMatch.selectedCardId || activeMatch.isClashing || activeMatch.matchFinished;
+    // Render Battlefield Lanes
+    if (arenaLanesBoard) {
+      arenaLanesBoard.className = `arena-lanes-board nodes-${activeMatch.nodeCount}`;
+      arenaLanesBoard.innerHTML = '';
+
+      activeMatch.nodes.forEach((node, nodeIdx) => {
+        const colDiv = document.createElement('div');
+        colDiv.className = 'arena-node-column';
+        if (node.winner === 'player') colDiv.classList.add('node-player-winning');
+        else if (node.winner === 'ai') colDiv.classList.add('node-ai-winning');
+        else if (node.winner === 'tie' && (node.playerScore > 0 || node.aiScore > 0)) colDiv.classList.add('node-tied');
+
+        // Header
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'node-header-banner';
+        headerDiv.innerHTML = `
+          <div class="node-title-row">
+            <span>${node.icon}</span>
+            <span>${node.name}</span>
+          </div>
+          <span class="node-buff-badge biome-${node.biome}">${node.desc}</span>
+        `;
+        colDiv.appendChild(headerDiv);
+
+        // AI Side
+        const aiSide = document.createElement('div');
+        aiSide.className = 'lane-side lane-side-ai';
+        aiSide.innerHTML = `
+          <div class="lane-side-header">
+            <span class="lane-owner-tag">Guide</span>
+            <span class="lane-power-meter">${node.aiScore} Pts</span>
+          </div>
+          <div class="lane-cards-dock" id="aiDockNode_${nodeIdx}"></div>
+        `;
+        colDiv.appendChild(aiSide);
+        const aiDock = aiSide.querySelector('.lane-cards-dock');
+        renderLaneCards(aiDock, node.aiCards, 'ai');
+
+        // Middle Gap / Status Divider
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'lane-status-divider';
+        const gap = Math.abs(node.playerScore - node.aiScore);
+        let gapText = 'Tied (0)';
+        let gapClass = 'tied';
+        if (node.playerScore > node.aiScore) {
+          gapText = `YOU LEAD (+${gap})`;
+          gapClass = 'winning';
+        } else if (node.aiScore > node.playerScore) {
+          gapText = `GUIDE +${gap}`;
+          gapClass = 'losing';
+        }
+        statusDiv.innerHTML = `<span class="lane-gap-pill ${gapClass}">${gapText}</span>`;
+        colDiv.appendChild(statusDiv);
+
+        // Player Side
+        const playerSide = document.createElement('div');
+        playerSide.className = 'lane-side lane-side-player';
+        playerSide.innerHTML = `
+          <div class="lane-cards-dock" id="playerDockNode_${nodeIdx}"></div>
+          <div class="lane-side-header">
+            <span class="lane-owner-tag">You</span>
+            <span class="lane-power-meter">${node.playerScore} Pts</span>
+          </div>
+        `;
+        colDiv.appendChild(playerSide);
+        const playerDock = playerSide.querySelector('.lane-cards-dock');
+        renderLaneCards(playerDock, node.playerCards, 'player', nodeIdx);
+
+        arenaLanesBoard.appendChild(colDiv);
+      });
+    }
+
+    // Showdown button visibility
+    if (btnShowdownAction) {
+      if (activeMatch.round === 3 && activeMatch.phase === 'blind_ready') {
+        btnShowdownAction.style.display = 'block';
+        btnShowdownAction.innerHTML = '<span>🌟 REVEAL DESTINATIONS!</span>';
+      } else {
+        btnShowdownAction.style.display = 'none';
+      }
     }
 
     // Render Hand Tray
@@ -1922,175 +2492,261 @@
           activeDeck: battleDeck
         });
 
-        if (!isPlayed && !activeMatch.isClashing && !activeMatch.matchFinished) {
+        if (!isPlayed && activeMatch.phase !== 'ai_thinking' && activeMatch.phase !== 'finished') {
           cardEl.addEventListener('click', () => {
-            activeMatch.selectedCardId = cardId;
+            activeMatch.selectedCardId = isSelected ? null : cardId;
             renderMatchUI();
           });
         }
         arenaHandGrid.appendChild(cardEl);
       });
     }
+
+    if (arenaHandInstruction) {
+      if (activeMatch.selectedCardId) {
+        arenaHandInstruction.textContent = 'Card selected! Tap a highlighted open stop in any landmark above';
+      } else {
+        arenaHandInstruction.textContent = `Select a card (${activeMatch.playerRemainingDeck.length} in hand), then tap a highlighted stop`;
+      }
+    }
   }
 
-  function executeClash() {
-    if (!activeMatch || !activeMatch.selectedCardId || activeMatch.isClashing || activeMatch.matchFinished) return;
-    activeMatch.isClashing = true;
-    if (btnClashAction) btnClashAction.disabled = true;
+  function renderLaneCards(dockEl, cardsArray, side, nodeIdx = null) {
+    dockEl.innerHTML = '';
 
-    const playerCardId = activeMatch.selectedCardId;
-    const playerCard = BATTLE_CARDS_MAP[playerCardId];
-
-    // AI chooses a card
-    const aiDeck = activeMatch.aiRemainingDeck;
-    let chosenAiCardId = aiDeck[0];
-
-    const strategy = activeMatch.challenger.strategy;
-    if (strategy === 'smart') {
-      // Find card with type advantage if possible
-      const counter = aiDeck.find(id => {
-        const c = BATTLE_CARDS_MAP[id];
-        return c && BATTLE_BIOMES[c.biome].beats === playerCard.biome;
-      });
-      chosenAiCardId = counter || aiDeck[Math.floor(Math.random() * aiDeck.length)];
-    } else if (strategy.startsWith('biome_')) {
-      const preferredBiome = strategy.replace('biome_', '');
-      const biomeCard = aiDeck.find(id => {
-        const c = BATTLE_CARDS_MAP[id];
-        return c && c.biome === preferredBiome;
-      });
-      chosenAiCardId = biomeCard || aiDeck[Math.floor(Math.random() * aiDeck.length)];
-    } else {
-      chosenAiCardId = aiDeck[Math.floor(Math.random() * aiDeck.length)];
-    }
-
-    const aiCard = BATTLE_CARDS_MAP[chosenAiCardId];
-
-    // Remove cards from remaining hands
-    activeMatch.playerRemainingDeck = activeMatch.playerRemainingDeck.filter(id => id !== playerCardId);
-    activeMatch.aiRemainingDeck = activeMatch.aiRemainingDeck.filter(id => id !== chosenAiCardId);
-
-    // Mount AI Card in Slot
-    if (aiSlotPlaceholder && aiCardMount) {
-      aiSlotPlaceholder.style.display = 'none';
-      aiCardMount.style.display = 'flex';
-      aiCardMount.innerHTML = '';
-      const aiCardEl = createCardElement(chosenAiCardId, { activeDeck: activeMatch.challenger.deck });
-      aiCardMount.appendChild(aiCardEl);
-    }
-
-    // Power & Biome Advantage calculation
-    let playerPower = getCardEffectivePower(playerCardId, battleDeck);
-    let aiPower = getCardEffectivePower(chosenAiCardId, activeMatch.challenger.deck);
-
-    let advantageMsg = '';
-
-    if (BATTLE_BIOMES[playerCard.biome].beats === aiCard.biome) {
-      playerPower += 3;
-      advantageMsg = `⛰️/🌊/🌾 Advantage! ${BATTLE_BIOMES[playerCard.biome].name} beats ${BATTLE_BIOMES[aiCard.biome].name} (+3 Power)!`;
-    } else if (BATTLE_BIOMES[aiCard.biome].beats === playerCard.biome) {
-      aiPower += 3;
-      advantageMsg = `Rival Advantage! ${BATTLE_BIOMES[aiCard.biome].name} beats ${BATTLE_BIOMES[playerCard.biome].name} (+3 Power)!`;
-    }
-
-    let roundOutcome = 'tie';
-    if (playerPower > aiPower) {
-      roundOutcome = 'player';
-      activeMatch.playerScore++;
-    } else if (aiPower > playerPower) {
-      roundOutcome = 'ai';
-      activeMatch.aiScore++;
-    }
-
-    // Visual impact & Clash badge
-    if (clashVsBadge) {
-      clashVsBadge.classList.add('clashing');
-      setTimeout(() => { clashVsBadge.classList.remove('clashing'); }, 600);
-    }
-
-    // Show Result Banner
-    if (clashResultBanner && clashResultTitle && clashResultDesc) {
-      clashResultTitle.className = `clash-result-title ${roundOutcome === 'player' ? 'player-win' : roundOutcome === 'ai' ? 'ai-win' : 'tie-round'}`;
-      if (roundOutcome === 'player') {
-        clashResultTitle.textContent = `ROUND WON! (${playerPower} vs ${aiPower})`;
-      } else if (roundOutcome === 'ai') {
-        clashResultTitle.textContent = `ROUND LOST! (${playerPower} vs ${aiPower})`;
+    for (let slot = 0; slot < 2; slot++) {
+      const cardData = cardsArray[slot];
+      if (cardData) {
+        if (cardData.isFaceDown) {
+          // Blind Showdown Face-Down Card
+          const blindCard = document.createElement('div');
+          blindCard.className = 'lane-card-blind';
+          blindCard.innerHTML = `
+            <span class="blind-icon">❓</span>
+            <span>SECRET</span>
+          `;
+          dockEl.appendChild(blindCard);
+        } else {
+          // Face-Up Mini Placed Card
+          const card = BATTLE_CARDS_MAP[cardData.cardId];
+          const placedDiv = document.createElement('div');
+          placedDiv.className = `lane-card-placed biome-${card ? card.biome : 'mountain'}`;
+          placedDiv.innerHTML = `
+            <div class="mini-card-top">
+              <span class="mini-card-type">${card ? card.kind : 'state'}</span>
+              <span class="mini-card-power">${cardData.effectivePower}</span>
+            </div>
+            <div class="mini-card-center">
+              <span class="mini-card-emoji">${card ? card.emoji : '⭐'}</span>
+              <span class="mini-card-name">${card ? card.name : '-'}</span>
+            </div>
+            ${cardData.hasSynergy ? '<span class="mini-card-bonus-tag synergy-glow">✨ +2 Capital Pair</span>' : (cardData.mathBonus ? '<span class="mini-card-bonus-tag">⚡ +1 Math</span>' : '')}
+          `;
+          dockEl.appendChild(placedDiv);
+        }
       } else {
-        clashResultTitle.textContent = `ROUND TIE! (${playerPower} vs ${aiPower})`;
-      }
+        // Empty Slot
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'lane-slot-empty';
 
-      clashResultDesc.textContent = advantageMsg || `${playerCard.name} clashed with ${aiCard.name}!`;
-      clashResultBanner.style.display = 'block';
+        if (side === 'player' && activeMatch.selectedCardId && (activeMatch.phase === 'player_turn' || activeMatch.phase === 'blind_prep')) {
+          emptyDiv.classList.add('slot-droppable');
+          emptyDiv.textContent = 'DEPLOY HERE ⚡';
+          emptyDiv.onclick = () => {
+            onPlayerAttemptPlay(activeMatch.selectedCardId, nodeIdx);
+          };
+        } else {
+          emptyDiv.textContent = 'Open Slot';
+        }
+        dockEl.appendChild(emptyDiv);
+      }
+    }
+  }
+
+  function onPlayerAttemptPlay(cardId, nodeIdx) {
+    if (!activeMatch || !cardId || nodeIdx === null) return;
+    const node = activeMatch.nodes[nodeIdx];
+    if (!node || node.playerCards.length >= 2) return;
+
+    const selectedCard = BATTLE_CARDS_MAP[cardId];
+    const cardName = selectedCard ? selectedCard.name : 'Card';
+
+    // Check if node has point gap to determine question type
+    let gap = null;
+    if (node.aiScore > node.playerScore) {
+      gap = node.aiScore - node.playerScore;
     }
 
-    // Update Round Dot
-    if (arenaRoundDots) {
-      const currentDot = arenaRoundDots.querySelector(`.round-dot[data-round="${activeMatch.round}"]`);
-      if (currentDot) {
-        if (roundOutcome === 'player') currentDot.classList.add('player-win');
-        else if (roundOutcome === 'ai') currentDot.classList.add('ai-win');
-        else currentDot.classList.add('tie-round');
-      }
-    }
+    const contextDesc = gap
+      ? `Guide has ${node.aiScore} Pts. Calculate the point difference to win the landmark!`
+      : `Supercharge ${cardName} with +1 Point!`;
 
-    if (arenaPlayerScore) arenaPlayerScore.textContent = activeMatch.playerScore;
-    if (arenaAiScore) arenaAiScore.textContent = activeMatch.aiScore;
+    triggerMathChallenge(contextDesc, gap, (mathBonus) => {
+      const targetPlays = getRequiredPlaysForRound(activeMatch.round, activeMatch.nodeCount);
 
-    // After 1.8 seconds, advance round or finish match
-    setTimeout(() => {
-      if (!activeMatch) return;
-      if (clashResultBanner) clashResultBanner.style.display = 'none';
+      if (activeMatch.round <= 2) {
+        // Round 1 or 2 play
+        const power = calculateCardNodePower(cardId, node, battleDeck, 'player', mathBonus);
+        node.playerCards.push({
+          cardId,
+          effectivePower: power,
+          mathBonus,
+          isFaceDown: false
+        });
 
-      if (activeMatch.round < 5) {
-        activeMatch.round++;
+        // Check if this play created a State + Capital synergy on this lane!
+        if (selectedCard) {
+          const partnerId = selectedCard.kind === 'state' ? `CAP_${selectedCard.stateId}` : `ST_${selectedCard.stateId}`;
+          const partnerPresent = node.playerCards.some(c => c.cardId === partnerId);
+          if (partnerPresent) {
+            playSynergySparkEffect(node.name);
+          }
+        }
+
+        activeMatch.playerRemainingDeck = activeMatch.playerRemainingDeck.filter(id => id !== cardId);
         activeMatch.selectedCardId = null;
-        activeMatch.isClashing = false;
+        activeMatch.roundPlaysMade++;
+
+        playAudioCue('drop');
+        recalculateNodeScores();
+
+        if (activeMatch.roundPlaysMade >= targetPlays) {
+          // Finished this round's plays, advance to next round!
+          activeMatch.round++;
+          activeMatch.roundPlaysMade = 0;
+          activeMatch.phase = 'ai_thinking';
+          renderMatchUI();
+
+          setTimeout(() => {
+            executeAiTurn();
+          }, 800);
+        } else {
+          // Still have 1 more reinforcement card to play in Round 2
+          renderMatchUI();
+        }
+
+      } else if (activeMatch.round === 3) {
+        // Round 3 (The Double Blind Showdown Placement)
+        node.playerCards.push({
+          cardId,
+          effectivePower: 0,
+          mathBonus,
+          isFaceDown: true
+        });
+
+        activeMatch.playerRemainingDeck = activeMatch.playerRemainingDeck.filter(id => id !== cardId);
+        activeMatch.selectedCardId = null;
+        activeMatch.roundPlaysMade++;
+
+        playAudioCue('drop');
+
+        if (activeMatch.roundPlaysMade >= targetPlays || activeMatch.playerRemainingDeck.length === 0) {
+          activeMatch.phase = 'blind_ready';
+        } else {
+          activeMatch.phase = 'blind_prep';
+        }
+
         renderMatchUI();
-      } else {
-        // Match Finished!
-        finishMatch();
       }
+    });
+  }
+
+  function executeShowdownReveal() {
+    if (!activeMatch || activeMatch.matchFinished) return;
+    if (btnShowdownAction) btnShowdownAction.style.display = 'none';
+
+    playAudioCue('showdown');
+
+    // Reveal all face-down cards
+    let createdSynergyOnReveal = false;
+    activeMatch.nodes.forEach(node => {
+      // Reveal AI blind cards
+      node.aiCards.forEach(ac => {
+        if (ac.isFaceDown) {
+          ac.isFaceDown = false;
+          ac.effectivePower = calculateCardNodePower(ac.cardId, node, activeMatch.challenger.deck, 'ai', 0);
+        }
+      });
+      // Reveal Player blind cards
+      node.playerCards.forEach(pc => {
+        if (pc.isFaceDown) {
+          pc.isFaceDown = false;
+          pc.effectivePower = calculateCardNodePower(pc.cardId, node, battleDeck, 'player', pc.mathBonus || 0);
+        }
+      });
+
+      // Check if player completed a synergy with their revealed cards
+      const playerStates = node.playerCards.map(c => BATTLE_CARDS_MAP[c.cardId]?.stateId).filter(Boolean);
+      if (playerStates.length === 2 && playerStates[0] === playerStates[1]) {
+        createdSynergyOnReveal = true;
+      }
+    });
+
+    if (createdSynergyOnReveal) {
+      playSynergySparkEffect('Showdown Lane');
+    }
+
+    recalculateNodeScores();
+    renderMatchUI();
+
+    if (arenaRoundPhase) arenaRoundPhase.textContent = '🌟 DESTINATIONS REVEALED!';
+    if (arenaTurnInstruction) arenaTurnInstruction.textContent = 'Tallying travel points across all landmarks...';
+
+    setTimeout(() => {
+      finishMatch();
     }, 1800);
   }
 
   function finishMatch() {
     if (!activeMatch) return;
     activeMatch.matchFinished = true;
-    activeMatch.isClashing = false;
+    activeMatch.phase = 'finished';
 
-    const isVictory = activeMatch.playerScore >= activeMatch.aiScore;
+    let playerWins = 0;
+    let aiWins = 0;
+    let playerTotalScore = 0;
+    let aiTotalScore = 0;
+
+    activeMatch.nodes.forEach(node => {
+      playerTotalScore += node.playerScore;
+      aiTotalScore += node.aiScore;
+      if (node.winner === 'player') playerWins++;
+      else if (node.winner === 'ai') aiWins++;
+    });
+
+    // Win if player controlled more nodes, or tiebreaker total score
+    let isVictory = false;
+    if (playerWins > aiWins) {
+      isVictory = true;
+    } else if (playerWins === aiWins) {
+      isVictory = (playerTotalScore >= aiTotalScore);
+    }
 
     if (arenaMatchOverlay) {
       arenaMatchOverlay.style.display = 'flex';
       if (isVictory) {
-        if (matchOverlayIcon) matchOverlayIcon.textContent = '🏆';
-        if (matchOverlayTitle) matchOverlayTitle.textContent = 'VICTORY!';
-        if (matchOverlayDesc) matchOverlayDesc.textContent = `You defeated ${activeMatch.challenger.name} (${activeMatch.playerScore} to ${activeMatch.aiScore})!`;
-        if (matchRewardPill) {
-          matchRewardPill.style.display = 'inline-block';
-          matchRewardPill.textContent = '📦 +1 Booster Pack Earned!';
-        }
+        if (matchOverlayIcon) matchOverlayIcon.textContent = '🚗';
+        if (matchOverlayTitle) matchOverlayTitle.textContent = 'ROAD TRIP VICTORY!';
+        if (matchOverlayDesc) matchOverlayDesc.textContent = `You explored ${playerWins} of ${activeMatch.nodeCount} landmarks with ${activeMatch.challenger.name} (${playerTotalScore} to ${aiTotalScore} Total Travel Points)!`;
 
-        // Check if this was a FIRST-TIME victory or a REMATCH (prevents infinite pack farming!)
         const isFirstClear = !defeatedChallengerIds.includes(activeMatch.challenger.id);
         if (isFirstClear) {
           defeatedChallengerIds.push(activeMatch.challenger.id);
           saveDefeatedChallengers();
-          awardBoosterPack(`🏆 First Victory over ${activeMatch.challenger.name}!`);
+          awardBoosterPack(`🏆 Explored with ${activeMatch.challenger.name}!`);
 
           if (matchRewardPill) {
             matchRewardPill.style.display = 'inline-block';
-            matchRewardPill.textContent = '📦 +1 Booster Pack Earned (First-Time Clear)!';
+            matchRewardPill.textContent = '📦 +1 Booster Pack Earned (New Trail Badge)!';
           }
         } else {
-          // NO booster pack awarded on rematches to preserve the study incentive
           if (matchRewardPill) {
             matchRewardPill.style.display = 'inline-block';
-            matchRewardPill.textContent = '🌟 Rematch Won! (Quizzes & streaks reward more card packs)';
+            matchRewardPill.textContent = '🌟 Trail Explored! (Study quizzes & streaks award more booster packs)';
           }
         }
 
-        // Check if next stage is available
+        // Check if next challenger is available
         const currentIdx = AI_CHALLENGERS.findIndex(c => c.id === activeMatch.challenger.id);
         const nextChallenger = (currentIdx !== -1 && currentIdx < AI_CHALLENGERS.length - 1) ? AI_CHALLENGERS[currentIdx + 1] : null;
         const totalCards = Object.keys(cardCollection).length;
@@ -2101,7 +2757,7 @@
             saveChallengerStage();
             if (btnMatchNextRival) {
               btnMatchNextRival.style.display = 'block';
-              btnMatchNextRival.innerHTML = `<span>Battle Next: ${nextChallenger.name} (${nextChallenger.badge}) ⚔️</span>`;
+              btnMatchNextRival.innerHTML = `<span>Next Guide: ${nextChallenger.name} (${nextChallenger.badge}) 🚗</span>`;
               btnMatchNextRival.onclick = () => {
                 if (arenaMatchOverlay) arenaMatchOverlay.style.display = 'none';
                 initMatch(nextChallenger.id);
@@ -2121,7 +2777,7 @@
         } else {
           if (btnMatchNextRival) {
             btnMatchNextRival.style.display = 'block';
-            btnMatchNextRival.innerHTML = `<span>👑 You Are the Grand Champion! Practice Flashcards 🎴</span>`;
+            btnMatchNextRival.innerHTML = `<span>👑 You Are the Grand Explorer of 50 States! 🎴</span>`;
             btnMatchNextRival.onclick = () => {
               if (arenaMatchOverlay) arenaMatchOverlay.style.display = 'none';
               switchView('cards');
@@ -2129,13 +2785,13 @@
           }
         }
       } else {
-        if (matchOverlayIcon) matchOverlayIcon.textContent = '💥';
-        if (matchOverlayTitle) matchOverlayTitle.textContent = 'DEFEAT!';
-        if (matchOverlayDesc) matchOverlayDesc.textContent = `${activeMatch.challenger.name} won this showdown. Swap in type counters in your Deck & Binder!`;
+        if (matchOverlayIcon) matchOverlayIcon.textContent = '🌟';
+        if (matchOverlayTitle) matchOverlayTitle.textContent = 'GREAT RALLY!';
+        if (matchOverlayDesc) matchOverlayDesc.textContent = `${activeMatch.challenger.name} reached more landmarks this trip. Match up state biomes and try again!`;
         if (matchRewardPill) matchRewardPill.style.display = 'none';
         if (btnMatchNextRival) {
           btnMatchNextRival.style.display = 'block';
-          btnMatchNextRival.innerHTML = `<span>Edit Deck in Binder 🎒</span>`;
+          btnMatchNextRival.innerHTML = `<span>Adjust Deck in Travel Binder 🎒</span>`;
           btnMatchNextRival.onclick = () => {
             if (arenaMatchOverlay) arenaMatchOverlay.style.display = 'none';
             battleSubPanel = 'binder';
@@ -2330,14 +2986,14 @@
             <div class="ladder-info-title">
               <span class="ladder-name">${challenger.name}</span>
               <span class="ladder-stage-pill">${challenger.badge}</span>
-              ${isDefeated ? '<span style="color: #10b981; font-weight: 800; font-size: 0.72rem;">✅ DEFEATED</span>' : ''}
+              ${isDefeated ? '<span style="color: #10b981; font-weight: 800; font-size: 0.72rem;">✅ EXPLORED</span>' : ''}
             </div>
             <div class="ladder-desc">${challenger.desc}</div>
           </div>
         </div>
         <div class="ladder-right">
           ${isUnlocked 
-            ? `<button class="btn-ladder-battle" data-id="${challenger.id}">${isActive ? 'Current Rival ⚔️' : 'Challenge! ⚔️'}</button>`
+            ? `<button class="btn-ladder-battle" data-id="${challenger.id}">${isActive ? 'Current Guide 🧭' : 'Rally Together! 🚗'}</button>`
             : `<span class="ladder-locked-tag">🔒 Need ${challenger.requiredCards} Cards</span>`
           }
         </div>
@@ -2483,9 +3139,9 @@
       });
     }
 
-    // Clash Trigger
-    if (btnClashAction) {
-      btnClashAction.addEventListener('click', executeClash);
+    // Showdown Reveal Trigger
+    if (btnShowdownAction) {
+      btnShowdownAction.addEventListener('click', executeShowdownReveal);
     }
 
     // Rematch & Ladder Navigation from overlay
@@ -2566,7 +3222,7 @@
   function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register(`./sw.js?v=11`).then(reg => {
+        navigator.serviceWorker.register(`./sw.js?v=14`).then(reg => {
           // Proactively check for newer versions on iOS / mobile Safari
           reg.update().catch(() => {});
 

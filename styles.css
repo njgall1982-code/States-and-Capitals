@@ -74,20 +74,204 @@ html, body {
 
 body {
   display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: flex-start;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* ==========================================================================
+   iPadOS / Desktop Pro Left Rail Navigation Sidebar
+   ========================================================================== */
+.app-sidebar {
+  width: 76px;
+  flex-shrink: 0;
+  background: rgba(13, 19, 36, 0.94);
+  border-right: 1px solid var(--border-subtle);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom)) 1rem;
-  min-height: 100vh;
+  justify-content: space-between;
+  padding: 1.1rem 0.35rem 1.25rem 0.35rem;
+  z-index: 120;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sidebar-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.sidebar-brand-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent-brand) 0%, #a855f7 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 4px 14px var(--accent-brand-glow);
+  cursor: default;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-brand-badge:hover {
+  transform: scale(1.06);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.sidebar-item {
+  width: 62px;
+  min-height: 52px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  position: relative;
+  padding: 0.35rem 0.2rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.sidebar-item.active {
+  background: rgba(99, 102, 241, 0.22);
+  border-color: rgba(99, 102, 241, 0.5);
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.3);
+}
+
+.sidebar-item.active .sidebar-item-icon {
+  transform: scale(1.08);
+  filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.6));
+}
+
+.sidebar-item-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.sidebar-item-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.sidebar-divider {
+  width: 32px;
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 0.25rem auto;
+}
+
+.sidebar-mini-badge {
+  font-size: 0.55rem;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fbbf24;
+  padding: 1px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+.sidebar-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.btn-sidebar-pack {
+  position: relative;
+}
+
+.sidebar-pack-badge {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  background: #f59e0b;
+  color: #0b0f19;
+  font-size: 0.62rem;
+  font-weight: 800;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.9);
+  animation: packPulse 1.8s infinite;
+}
+
+/* ==========================================================================
+   Main Workspace Layout
+   ========================================================================== */
+.main-layout {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.25rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom)) 1.25rem;
+  overflow-y: auto;
+  max-height: 100vh;
 }
 
 /* App Container */
 .app-container {
   width: 100%;
-  max-width: 680px;
+  max-width: 720px;
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 1.1rem;
   margin: 0 auto;
+  transition: max-width 0.25s ease;
+}
+
+/* Expand workspace when viewing Strategic Battle Arena */
+body.view-battle-active .app-container {
+  max-width: 940px;
+}
+
+/* Eliminate ribbon clutter: hide study progress bar & study stats pill in Battle Arena */
+body.view-battle-active .progress-container,
+body.view-battle-active .header-stats-pill {
+  display: none !important;
 }
 
 /* ==========================================================================
@@ -2825,5 +3009,737 @@ body {
   }
 }
 
+/* ==========================================================================
+   Strategic Multi-Node Lane Battler Styles
+   ========================================================================== */
 
+/* Top Arena Header & Node Tally */
+.arena-match-nodes-score {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+}
 
+.node-tally-item {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.node-tally-item strong {
+  font-size: 1.1rem;
+  color: var(--text-main);
+}
+
+.node-tally-item.player-tally strong {
+  color: #38bdf8;
+}
+
+.node-tally-item.ai-tally strong {
+  color: #f43f5e;
+}
+
+.node-tally-divider {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--text-subtle);
+}
+
+/* Round & Phase Tracker Bar */
+.arena-round-tracker-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.round-phase-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(168, 85, 247, 0.25) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #e0e7ff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.35rem 1rem;
+  border-radius: 999px;
+}
+
+.round-hint-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Battlefield Lanes Board (2 or 3 Columns) */
+.arena-lanes-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto 0.9rem auto;
+  align-items: stretch;
+}
+
+.arena-lanes-board.nodes-2 {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 680px;
+}
+
+/* Single Objective Node Column */
+.arena-node-column {
+  display: flex;
+  flex-direction: column;
+  background: rgba(19, 27, 46, 0.85);
+  backdrop-filter: blur(12px);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 0.65rem;
+  box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.arena-node-column.node-player-winning {
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.2);
+}
+
+.arena-node-column.node-ai-winning {
+  border-color: rgba(244, 63, 94, 0.6);
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.2);
+}
+
+.arena-node-column.node-tied {
+  border-color: rgba(234, 179, 8, 0.5);
+}
+
+/* Node Header Banner */
+.node-header-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: rgba(11, 15, 25, 0.7);
+  border: 1px solid var(--border-subtle);
+  margin-bottom: 0.5rem;
+  text-align: center;
+  height: 88px !important;
+  min-height: 88px !important;
+  max-height: 88px !important;
+  box-sizing: border-box;
+}
+
+.node-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--text-main);
+  text-align: center;
+  line-height: 1.25;
+  min-height: 2.2rem;
+  width: 100%;
+}
+
+.node-buff-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.node-buff-badge.biome-mountain {
+  background: rgba(224, 122, 95, 0.25);
+  color: #ff9d85;
+  border: 1px solid rgba(224, 122, 95, 0.4);
+}
+
+.node-buff-badge.biome-coast {
+  background: rgba(56, 189, 248, 0.25);
+  color: #7dd3fc;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.node-buff-badge.biome-heartland {
+  background: rgba(34, 197, 94, 0.25);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.node-buff-badge.biome-neutral {
+  background: rgba(168, 85, 247, 0.25);
+  color: #d8b4fe;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+}
+
+/* Lane Opponent & Player Territories */
+.lane-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  position: relative;
+}
+
+.lane-side-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.2rem;
+  height: 24px;
+  min-height: 24px;
+  max-height: 24px;
+  box-sizing: border-box;
+}
+
+.lane-owner-tag {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+}
+
+.lane-power-meter {
+  font-size: 0.85rem;
+  font-weight: 900;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.lane-side-ai .lane-power-meter {
+  color: #fca5a5;
+  border: 1px solid rgba(244, 63, 94, 0.35);
+}
+
+.lane-side-player .lane-power-meter {
+  color: #7dd3fc;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+/* Slots Grid in Each Lane (2 Card Slots) */
+.lane-cards-dock {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.35rem;
+  height: 116px;
+  min-height: 116px;
+  max-height: 116px;
+  box-sizing: border-box;
+}
+
+.lane-slot-empty {
+  border: 2px dashed rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-subtle);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.2rem;
+  background: rgba(0, 0, 0, 0.18);
+  height: 116px;
+  min-height: 116px;
+  max-height: 116px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.lane-side-player .lane-slot-empty.slot-droppable {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  cursor: pointer;
+  animation: slotPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes slotPulse {
+  0%, 100% { border-color: rgba(56, 189, 248, 0.4); transform: scale(1); }
+  50% { border-color: #38bdf8; transform: scale(1.02); box-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
+}
+
+/* Mini Cards Inside Slots */
+.lane-card-placed {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.4rem;
+  height: 116px;
+  min-height: 116px;
+  max-height: 116px;
+  box-sizing: border-box;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  background: #1e293b;
+  border: 1px solid var(--border-subtle);
+  animation: cardDropIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes cardDropIn {
+  0% { transform: translateY(-12px) scale(0.9); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.lane-card-placed.biome-mountain {
+  background: linear-gradient(145deg, #2b1d1a 0%, #1c1415 100%);
+  border-color: rgba(224, 122, 95, 0.45);
+}
+
+.lane-card-placed.biome-coast {
+  background: linear-gradient(145deg, #142435 0%, #0d1726 100%);
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+.lane-card-placed.biome-heartland {
+  background: linear-gradient(145deg, #132a1d 0%, #0d1a13 100%);
+  border-color: rgba(34, 197, 94, 0.45);
+}
+
+.mini-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mini-card-type {
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+
+.mini-card-power {
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.mini-card-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.mini-card-emoji {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.mini-card-name {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--text-main);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+
+.mini-card-bonus-tag {
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 1px 4px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.mini-card-bonus-tag.synergy-glow {
+  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #fbbf24;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+  animation: synergyPulse 1.2s infinite alternate ease-in-out;
+}
+
+@keyframes synergyPulse {
+  0% { transform: scale(1); box-shadow: 0 0 6px rgba(245, 158, 11, 0.5); }
+  100% { transform: scale(1.05); box-shadow: 0 0 14px rgba(245, 158, 11, 0.9); }
+}
+
+/* Face-Down Blind Showdown Card */
+.lane-card-blind {
+  background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%);
+  border: 2px dashed #818cf8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  height: 116px;
+  min-height: 116px;
+  max-height: 116px;
+  box-sizing: border-box;
+  border-radius: var(--radius-sm);
+  color: #c7d2fe;
+  font-size: 0.72rem;
+  font-weight: 800;
+  box-shadow: 0 0 12px rgba(129, 140, 248, 0.3);
+  animation: blindGlow 1.5s infinite alternate;
+}
+
+@keyframes blindGlow {
+  0% { box-shadow: 0 0 6px rgba(129, 140, 248, 0.3); }
+  100% { box-shadow: 0 0 16px rgba(129, 140, 248, 0.7); }
+}
+
+.blind-icon {
+  font-size: 1.5rem;
+}
+
+/* Center Lane Status & Gap Badge */
+.lane-status-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  min-height: 28px;
+  max-height: 28px;
+  margin: 0.35rem 0;
+  box-sizing: border-box;
+}
+
+.lane-gap-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-subtle);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.lane-gap-pill.winning {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.15);
+}
+
+.lane-gap-pill.losing {
+  color: #f43f5e;
+  border-color: rgba(244, 63, 94, 0.4);
+  background: rgba(244, 63, 94, 0.15);
+}
+
+.lane-gap-pill.tied {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.15);
+}
+
+/* ==========================================================================
+   Math Supercharge Challenge Modal
+   ========================================================================== */
+.math-challenge-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.math-challenge-card {
+  background: linear-gradient(160deg, #1e1b4b 0%, #0f172a 100%);
+  border: 2px solid #6366f1;
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 24px rgba(99, 102, 241, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scaleIn {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.math-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.math-badge {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #c7d2fe;
+  background: rgba(99, 102, 241, 0.3);
+  border: 1px solid rgba(99, 102, 241, 0.5);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.math-timer-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 3px solid #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: #fef08a;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.math-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.math-card-context {
+  font-size: 0.88rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.math-question-text {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.math-options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.btn-math-option {
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  color: #ffffff;
+  font-size: 1.4rem;
+  font-weight: 800;
+  padding: 0.8rem 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-math-option:hover {
+  background: #6366f1;
+  border-color: #818cf8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(99, 102, 241, 0.4);
+}
+
+.btn-math-option:active {
+  transform: translateY(1px);
+}
+
+.btn-math-option.math-correct {
+  background: #10b981 !important;
+  border-color: #34d399 !important;
+  color: #0b0f19 !important;
+}
+
+.btn-math-option.math-wrong {
+  background: #f43f5e !important;
+  border-color: #fda4af !important;
+  opacity: 0.5;
+}
+
+.math-card-footer {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-math-skip {
+  background: transparent;
+  border: none;
+  color: var(--text-subtle);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  transition: color 0.15s ease;
+}
+
+.btn-math-skip:hover {
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+
+/* Floating Power Boost Particle */
+.floating-boost-badge {
+  position: fixed;
+  z-index: 10000;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #38bdf8;
+  background: rgba(15, 23, 42, 0.95);
+  border: 2px solid #38bdf8;
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.6);
+  pointer-events: none;
+  animation: floatUpFade 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes floatUpFade {
+  0% { transform: translateY(0) scale(0.8); opacity: 1; }
+  100% { transform: translateY(-45px) scale(1.15); opacity: 0; }
+}
+
+@media (max-width: 600px) {
+  body {
+    flex-direction: column;
+  }
+
+  .app-sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+    height: 60px;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0.25rem 0.4rem calc(0.25rem + env(safe-area-inset-bottom)) 0.4rem;
+    border-top: 1px solid var(--border-subtle);
+    border-right: none;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.45);
+    background: rgba(13, 19, 36, 0.96);
+  }
+
+  .sidebar-top,
+  .sidebar-divider,
+  #sidebarBtnVault,
+  #sidebarBtnSettings {
+    display: none;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 0.2rem;
+    width: auto;
+    flex: 1;
+  }
+
+  .sidebar-bottom {
+    flex-direction: row;
+    width: auto;
+  }
+
+  .sidebar-item {
+    width: 52px;
+    min-height: 46px;
+    padding: 0.2rem 0.1rem;
+    border-radius: 10px;
+  }
+
+  .sidebar-item-icon {
+    font-size: 1.15rem;
+  }
+
+  .sidebar-item-label {
+    font-size: 0.56rem;
+  }
+
+  .main-layout {
+    padding: 0.8rem 0.8rem calc(72px + env(safe-area-inset-bottom)) 0.8rem;
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .arena-lanes-board {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+  }
+  .arena-node-column {
+    padding: 0.4rem;
+  }
+  .node-title-row {
+    font-size: 0.75rem;
+  }
+  .node-buff-badge {
+    font-size: 0.6rem;
+    padding: 1px 5px;
+  }
+  .lane-cards-dock {
+    min-height: 90px;
+    gap: 0.2rem;
+  }
+  .lane-slot-empty {
+    min-height: 90px;
+    font-size: 0.6rem;
+  }
+  .lane-card-placed, .lane-card-blind {
+    min-height: 90px;
+    padding: 0.25rem;
+  }
+  .mini-card-emoji {
+    font-size: 1.1rem;
+  }
+  .mini-card-name {
+    font-size: 0.65rem;
+    max-width: 45px;
+  }
+  .mini-card-power {
+    font-size: 0.75rem;
+  }
+}

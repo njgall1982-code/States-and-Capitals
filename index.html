@@ -21,64 +21,108 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles.css?v=11">
+  <link rel="stylesheet" href="styles.css?v=14">
 </head>
 <body>
 
-  <div class="app-container">
-    
-    <!-- Minimal Streamlined Header -->
-    <header class="app-header">
-      <div class="brand">
-        <div class="brand-icon" aria-hidden="true">🇺🇸</div>
-        <div class="brand-title">
-          <h1>States & Capitals</h1>
-        </div>
-      </div>
-      <div class="header-right">
-        <div class="header-stats-pill" id="headerStatsPill" title="Study Progress">
-          ✅ <span class="pill-mastered" id="headerMasteredCount">0</span>/50
-          <span style="color: var(--text-subtle);">•</span>
-          <span id="headerMasteredPercent">0%</span>
-        </div>
-        <button id="btnOpenPacks" class="btn-settings-toggle btn-pack-toggle" title="Open Booster Packs" aria-label="Booster Packs">
-          📦<span class="pack-badge-bubble" id="headerPackBadge" style="display:none;">0</span>
-        </button>
-        <button id="btnOpenVault" class="btn-settings-toggle" title="Dad Joke Vault & Trophies" aria-label="Open Dad Joke Vault">
-          🏆
-        </button>
-        <button id="btnOpenSettings" class="btn-settings-toggle" title="Study Settings" aria-label="Open Study Settings">
-          ⚙️
-        </button>
-      </div>
-    </header>
-
-    <!-- Global Slim Progress Track & Mode Indicator -->
-    <div class="progress-container">
-      <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-        <div class="progress-bar-known" id="progressBarKnown" style="width: 0%"></div>
-        <div class="progress-bar-missed" id="progressBarMissed" style="width: 0%"></div>
-      </div>
-      <div class="active-deck-indicator">
-        <span class="badge-mode" id="activeDeckBadge">All 50 States • State First</span>
-        <span id="activeStatsBadge">❌ 0 Missed • 50 Left</span>
-      </div>
+  <!-- Pro iPadOS / Desktop Left Rail Navigation Sidebar -->
+  <aside class="app-sidebar" id="appSidebar" aria-label="Main Navigation">
+    <div class="sidebar-top">
+      <div class="sidebar-brand-badge" title="50 US States & Capitals">🇺🇸</div>
     </div>
 
-    <!-- Top View Switcher (Flashcards vs Map Quiz vs Battle Arena) -->
-    <div class="view-switch-bar">
-      <div class="segmented-group view-toggle-group" id="viewToggleGroup" role="tablist" aria-label="Mode Selection">
-        <button class="segmented-btn active" id="tabFlashcards" role="tab" aria-selected="true" data-view="cards">
-          🎴 Flashcards
-        </button>
-        <button class="segmented-btn" id="tabMapQuiz" role="tab" aria-selected="false" data-view="map">
-          🗺️ Map Quiz
-        </button>
-        <button class="segmented-btn" id="tabBattleArena" role="tab" aria-selected="false" data-view="battle">
-          ⚔️ Battle Arena <span class="badge-tab-pill" id="navPackBadge" style="display:none;">!</span>
-        </button>
-      </div>
+    <nav class="sidebar-nav">
+      <!-- Core Study Modes -->
+      <button class="sidebar-item active" id="sidebarNavCards" data-view="cards" title="Flashcard Study Mode" aria-label="Flashcards">
+        <span class="sidebar-item-icon">🎴</span>
+        <span class="sidebar-item-label">Cards</span>
+      </button>
+
+      <button class="sidebar-item" id="sidebarNavMap" data-view="map" title="Interactive Map Quiz" aria-label="Map Quiz">
+        <span class="sidebar-item-icon">🗺️</span>
+        <span class="sidebar-item-label">Map</span>
+      </button>
+
+      <div class="sidebar-divider"></div>
+
+      <!-- Road Trip Rally Modes -->
+      <button class="sidebar-item" id="sidebarNavArena" data-view="battle" data-subpanel="match" title="Road Trip Rally" aria-label="Road Trip Rally">
+        <span class="sidebar-item-icon">🚗</span>
+        <span class="sidebar-item-label">Rally</span>
+      </button>
+
+      <button class="sidebar-item" id="sidebarNavBinder" data-view="battle" data-subpanel="binder" title="100-Card Travel Album & Deck" aria-label="Travel Journal & Binder">
+        <span class="sidebar-item-icon">🎒</span>
+        <span class="sidebar-item-label">Binder</span>
+        <span class="sidebar-mini-badge" id="sidebarDeckCountBadge">5/5</span>
+      </button>
+
+      <button class="sidebar-item" id="sidebarNavLadder" data-view="battle" data-subpanel="ladder" title="Trail Guides along the Road" aria-label="Trail Guides">
+        <span class="sidebar-item-icon">🧭</span>
+        <span class="sidebar-item-label">Guides</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <button class="sidebar-item btn-sidebar-pack" id="sidebarBtnPacks" title="Open Booster Packs" aria-label="Booster Packs">
+        <span class="sidebar-item-icon">📦</span>
+        <span class="sidebar-item-label">Packs</span>
+        <span class="sidebar-pack-badge" id="sidebarPackBadge" style="display:none;">0</span>
+      </button>
+
+      <button class="sidebar-item" id="sidebarBtnVault" title="Dad Joke Vault & Trophies" aria-label="Open Dad Joke Vault">
+        <span class="sidebar-item-icon">🏆</span>
+        <span class="sidebar-item-label">Vault</span>
+      </button>
+
+      <button class="sidebar-item" id="sidebarBtnSettings" title="Study Settings" aria-label="Open Study Settings">
+        <span class="sidebar-item-icon">⚙️</span>
+        <span class="sidebar-item-label">Settings</span>
+      </button>
     </div>
+  </aside>
+
+  <!-- Main Content Workspace -->
+  <div class="main-layout" id="mainLayout">
+    <div class="app-container">
+      
+      <!-- Minimal Streamlined Header -->
+      <header class="app-header">
+        <div class="brand">
+          <div class="brand-icon" aria-hidden="true">🇺🇸</div>
+          <div class="brand-title">
+            <h1>States & Capitals</h1>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="header-stats-pill" id="headerStatsPill" title="Study Progress">
+            ✅ <span class="pill-mastered" id="headerMasteredCount">0</span>/50
+            <span style="color: var(--text-subtle);">•</span>
+            <span id="headerMasteredPercent">0%</span>
+          </div>
+          <button id="btnOpenPacks" class="btn-settings-toggle btn-pack-toggle" title="Open Booster Packs" aria-label="Booster Packs">
+            📦<span class="pack-badge-bubble" id="headerPackBadge" style="display:none;">0</span>
+          </button>
+          <button id="btnOpenVault" class="btn-settings-toggle" title="Dad Joke Vault & Trophies" aria-label="Open Dad Joke Vault">
+            🏆
+          </button>
+          <button id="btnOpenSettings" class="btn-settings-toggle" title="Study Settings" aria-label="Open Study Settings">
+            ⚙️
+          </button>
+        </div>
+      </header>
+
+      <!-- Global Slim Progress Track & Mode Indicator (Study Modes) -->
+      <div class="progress-container">
+        <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress-bar-known" id="progressBarKnown" style="width: 0%"></div>
+          <div class="progress-bar-missed" id="progressBarMissed" style="width: 0%"></div>
+        </div>
+        <div class="active-deck-indicator">
+          <span class="badge-mode" id="activeDeckBadge">All 50 States • State First</span>
+          <span id="activeStatsBadge">❌ 0 Missed • 50 Left</span>
+        </div>
+      </div>
 
     <!-- Cards View (Original Flashcards) -->
     <div class="view-panel active" id="cardsView">
@@ -255,31 +299,16 @@
       </section>
     </div><!-- /mapView -->
 
-    <!-- Battle Arena View (State Clash Minigame) -->
+    <!-- Road Trip Rally View -->
     <div class="view-panel" id="battleView">
       <div class="battle-arena-container">
         
-        <!-- Battle Sub-Navigation (Duel vs Binder/Deck vs Challengers) -->
-        <div class="battle-nav-bar">
-          <div class="segmented-group battle-segmented-group" id="battleSubNavGroup">
-            <button class="segmented-btn active" id="btnSubNavMatch" data-subpanel="match">
-              ⚔️ Clash Duel
-            </button>
-            <button class="segmented-btn" id="btnSubNavBinder" data-subpanel="binder">
-              🎒 Deck & Binder <span class="badge-tab-pill" id="binderDeckCountPill">5/5</span>
-            </button>
-            <button class="segmented-btn" id="btnSubNavLadder" data-subpanel="ladder">
-              🗺️ Challengers
-            </button>
-          </div>
-        </div>
-
         <!-- ============================================================= -->
-        <!-- Subpanel 1: Clash Duel Arena -->
+        <!-- Subpanel 1: Scenic Stop Rally -->
         <!-- ============================================================= -->
         <div class="battle-subpanel active" id="battlePanelMatch">
           
-          <!-- Opponent Header & Match Info -->
+          <!-- Guide Header & Rally Status -->
           <div class="arena-top-banner">
             <div class="arena-opponent-info">
               <span class="arena-avatar" id="arenaOpponentAvatar">🏕️</span>
@@ -288,84 +317,67 @@
                 <div class="arena-opponent-title" id="arenaOpponentTitle">Trail Rookie • Stage 1</div>
               </div>
             </div>
-            <button class="btn-arena-change-opp" id="btnChangeOpponent" title="Change Computer Challenger">
-              Change Opponent 🗺️
+            <div class="arena-match-nodes-score" id="arenaNodesTally">
+              <span class="node-tally-item player-tally">YOU <strong id="playerNodesWon">0</strong></span>
+              <span class="node-tally-divider">VS</span>
+              <span class="node-tally-item ai-tally"><strong id="aiNodesWon">0</strong> GUIDE</span>
+            </div>
+            <button class="btn-arena-change-opp" id="btnChangeOpponent" title="View Trail Guides along the Road">
+              Trail Guides 🧭
             </button>
           </div>
 
-          <!-- Scoreboard & Biome Triangle Guide -->
-          <div class="arena-scoreboard-card">
-            <div class="scoreboard-scores">
-              <div class="score-player">
-                <span class="score-label">YOU</span>
-                <span class="score-num" id="arenaPlayerScore">0</span>
-              </div>
-              <div class="score-round-dots" id="arenaRoundDots">
-                <span class="round-dot active" data-round="1">1</span>
-                <span class="round-dot" data-round="2">2</span>
-                <span class="round-dot" data-round="3">3</span>
-                <span class="round-dot" data-round="4">4</span>
-                <span class="round-dot" data-round="5">5</span>
-              </div>
-              <div class="score-ai">
-                <span class="score-num" id="arenaAiScore">0</span>
-                <span class="score-label">RIVAL</span>
-              </div>
-            </div>
-            
-            <div class="biome-triad-hint">
-              <span class="biome-triad-step">⛰️ Mountain <span class="triad-arrow">▶</span> 🌊 Coast</span>
-              <span class="triad-sep">•</span>
-              <span class="biome-triad-step">🌊 Coast <span class="triad-arrow">▶</span> 🌾 Heartland</span>
-              <span class="triad-sep">•</span>
-              <span class="biome-triad-step">🌾 Heartland <span class="triad-arrow">▶</span> ⛰️ Mountain</span>
-              <span class="triad-bonus">(+3 Power!)</span>
-            </div>
+          <!-- Turn & Round Status Tracker -->
+          <div class="arena-round-tracker-bar">
+            <div class="round-phase-pill" id="arenaRoundPhase">Round 1 of 3: Opening Moves</div>
+            <div class="round-hint-text" id="arenaTurnInstruction">Guide is choosing an opening landmark...</div>
           </div>
 
-          <!-- The Clash Ring (Center Duel Area) -->
-          <div class="arena-clash-ring" id="arenaClashRing">
-            
-            <!-- AI Challenger Slot -->
-            <div class="clash-slot clash-slot-ai" id="aiCardSlot">
-              <div class="card-slot-placeholder" id="aiSlotPlaceholder">
-                <div class="ai-mystery-card">
-                  <span class="mystery-icon">❓</span>
-                  <span class="mystery-text">Rival's Card</span>
-                </div>
-              </div>
-              <div class="clash-card-mount" id="aiCardMount" style="display: none;"></div>
-            </div>
-
-            <!-- Center Clash Impact / Announcer -->
-            <div class="clash-vs-hub" id="clashVsHub">
-              <div class="clash-vs-badge" id="clashVsBadge">VS</div>
-              <div class="clash-result-banner" id="clashResultBanner" style="display: none;">
-                <div class="clash-result-title" id="clashResultTitle">-</div>
-                <div class="clash-result-desc" id="clashResultDesc">-</div>
-              </div>
-            </div>
-
-            <!-- Player Slot -->
-            <div class="clash-slot clash-slot-player" id="playerCardSlot">
-              <div class="card-slot-placeholder" id="playerSlotPlaceholder">
-                <span class="player-slot-prompt">Select a card below to duel!</span>
-              </div>
-              <div class="clash-card-mount" id="playerCardMount" style="display: none;"></div>
-            </div>
-
+          <!-- Multi-Node Objective Battlefield -->
+          <div class="arena-lanes-board" id="arenaLanesBoard">
+            <!-- Dynamically populated with 2 or 3 Objective Nodes -->
           </div>
 
-          <!-- Bottom Hand Selection Tray -->
+          <!-- Player Hand & Action Bar -->
           <div class="arena-hand-section">
             <div class="hand-header">
-              <span class="hand-title">Your 5-Card Battle Hand</span>
-              <button class="btn-clash-trigger" id="btnClashAction" disabled>
-                <span>⚡ Clash Cards!</span>
+              <div class="hand-header-text">
+                <span class="hand-title">Your Rally Hand</span>
+                <span class="hand-subtitle" id="arenaHandInstruction">Select a card, then tap a highlighted stop</span>
+              </div>
+              <button class="btn-clash-trigger" id="btnShowdownAction" style="display: none;">
+                <span>🌟 REVEAL DESTINATIONS!</span>
               </button>
             </div>
             <div class="arena-hand-grid" id="arenaHandGrid">
-              <!-- Rendered dynamically from player's 5 deck cards -->
+              <!-- Rendered dynamically from player's battle deck -->
+            </div>
+          </div>
+
+          <!-- Math Supercharge Challenge Modal -->
+          <div class="math-challenge-overlay" id="mathChallengeModal" style="display: none;">
+            <div class="math-challenge-card">
+              <div class="math-card-header">
+                <span class="math-badge" id="mathChallengeBadge">⚡ 5TH GRADE POWER BOOST</span>
+                <div class="math-timer-circle" id="mathTimerCircle">
+                  <span id="mathTimerCount">10</span>s
+                </div>
+              </div>
+              
+              <div class="math-card-body">
+                <div class="math-card-context" id="mathChallengeContext">Supercharge your card with +1 Power!</div>
+                <div class="math-question-text" id="mathQuestionText">7 × 8 = ?</div>
+                
+                <div class="math-options-grid" id="mathOptionsGrid">
+                  <button class="btn-math-option" data-ans="0">48</button>
+                  <button class="btn-math-option" data-ans="1">56</button>
+                  <button class="btn-math-option" data-ans="2">64</button>
+                </div>
+              </div>
+
+              <div class="math-card-footer">
+                <button class="btn-math-skip" id="btnSkipMath">Skip (Play at Base Power)</button>
+              </div>
             </div>
           </div>
 
@@ -406,7 +418,7 @@
           <div class="binder-deck-dock">
             <div class="dock-header">
               <div>
-                <span class="dock-title">Active 5-Card Battle Deck</span>
+                <span class="dock-title">Active 5-Card Travel Deck</span>
                 <span class="dock-subtitle" id="dockCountLabel">5 of 5 Selected</span>
               </div>
               <button class="btn-quick-fuse" id="btnQuickFuse" title="Combine duplicates to upgrade stars">
@@ -445,23 +457,24 @@
         </div><!-- /battlePanelBinder -->
 
         <!-- ============================================================= -->
-        <!-- Subpanel 3: Challenger Ladder -->
+        <!-- Subpanel 3: Trail Guides -->
         <!-- ============================================================= -->
         <div class="battle-subpanel" id="battlePanelLadder" style="display: none;">
           <div class="ladder-header">
-            <h2>🗺️ Adventure Road: Computer Challengers</h2>
-            <p>Defeat each rival along the trail to unlock higher stages, earn trophies, and win booster packs!</p>
+            <h2>🗺️ Road Trip Adventure: Trail Guides</h2>
+            <p>Journey with each guide along the trail to explore new regions, collect stamps, and earn booster packs!</p>
           </div>
 
           <div class="ladder-list" id="ladderList">
-            <!-- 5 Challenger stages rendered dynamically -->
+            <!-- 5 Guide stages rendered dynamically -->
           </div>
         </div><!-- /battlePanelLadder -->
 
       </div>
     </div><!-- /battleView -->
 
-  </div>
+    </div><!-- /app-container -->
+  </div><!-- /main-layout -->
 
   <!-- Settings Modal Sheet (Houses all controls cleanly) -->
   <div class="modal-backdrop" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsSheetTitle">
@@ -648,10 +661,10 @@
   </div>
 
   <!-- Scripts -->
-  <script src="data/states.js?v=11"></script>
-  <script src="data/jokes.js?v=11"></script>
-  <script src="data/cards.js?v=11"></script>
-  <script src="data/us-map-template.js?v=11"></script>
-  <script src="app.js?v=11"></script>
+  <script src="data/states.js?v=14"></script>
+  <script src="data/jokes.js?v=14"></script>
+  <script src="data/cards.js?v=14"></script>
+  <script src="data/us-map-template.js?v=14"></script>
+  <script src="app.js?v=14"></script>
 </body>
 </html>

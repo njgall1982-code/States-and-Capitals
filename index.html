@@ -322,9 +322,14 @@
               <span class="node-tally-divider">VS</span>
               <span class="node-tally-item ai-tally"><strong id="aiNodesWon">0</strong> GUIDE</span>
             </div>
-            <button class="btn-arena-change-opp" id="btnChangeOpponent" title="View Trail Guides along the Road">
-              Trail Guides 🧭
-            </button>
+            <div class="arena-banner-actions">
+              <button class="btn-arena-how-to-play" id="btnRallyHowToPlay" title="Learn how to play Road Trip Rally">
+                How to Play 💡
+              </button>
+              <button class="btn-arena-change-opp" id="btnChangeOpponent" title="View Trail Guides along the Road">
+                Trail Guides 🧭
+              </button>
+            </div>
           </div>
 
           <!-- Turn & Round Status Tracker -->
@@ -339,7 +344,7 @@
           </div>
 
           <!-- Player Hand & Action Bar -->
-          <div class="arena-hand-section">
+          <div class="arena-hand-section" id="arenaHandSection">
             <div class="hand-header">
               <div class="hand-header-text">
                 <span class="hand-title">Your Rally Hand</span>
@@ -351,6 +356,42 @@
             </div>
             <div class="arena-hand-grid" id="arenaHandGrid">
               <!-- Rendered dynamically from player's battle deck -->
+            </div>
+          </div>
+
+          <!-- Floating Mobile Hand Nudge Pill -->
+          <button class="arena-hand-nudge-pill" id="arenaHandNudgePill" style="display: none;">
+            <span>👇 Your Cards Are Below — Tap to View!</span>
+          </button>
+
+          <!-- Interactive Walkthrough / Tutorial Callout System -->
+          <div class="rally-tutorial-layer" id="rallyTutorialLayer" style="display: none;">
+            <div class="rally-tutorial-popover" id="rallyTutorialPopover">
+              <div class="tutorial-arrow" id="tutorialArrow"></div>
+              <div class="tutorial-card-content">
+                <div class="tutorial-header">
+                  <div class="tutorial-avatar" id="tutorialAvatar">🏕️</div>
+                  <div class="tutorial-title-wrap">
+                    <span class="tutorial-badge" id="tutorialBadge">GUIDE • STEP 1 OF 4</span>
+                    <h4 class="tutorial-title" id="tutorialTitle">Welcome to Road Trip Rally!</h4>
+                  </div>
+                  <button class="btn-tutorial-skip" id="btnTutorialSkip" title="Skip Tutorial">Skip ✕</button>
+                </div>
+                <p class="tutorial-body" id="tutorialBody">
+                  Your goal is simple: Win more Scenic Stops than your Trail Guide! Match cards with high power to take the lead.
+                </p>
+                <div class="tutorial-footer">
+                  <div class="tutorial-step-dots" id="tutorialStepDots">
+                    <span class="dot active"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                  </div>
+                  <button class="btn-tutorial-next" id="btnTutorialNext">
+                    <span>Got It! ➡️</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -661,10 +702,10 @@
   </div>
 
   <!-- Scripts -->
-  <script src="data/states.js?v=14"></script>
-  <script src="data/jokes.js?v=14"></script>
-  <script src="data/cards.js?v=14"></script>
-  <script src="data/us-map-template.js?v=14"></script>
-  <script src="app.js?v=14"></script>
+  <script src="data/states.js?v=15"></script>
+  <script src="data/jokes.js?v=15"></script>
+  <script src="data/cards.js?v=15"></script>
+  <script src="data/us-map-template.js?v=15"></script>
+  <script src="app.js?v=15"></script>
 </body>
 </html>

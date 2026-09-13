@@ -173,6 +173,19 @@
   const arenaHandInstruction = document.getElementById('arenaHandInstruction');
   const btnShowdownAction = document.getElementById('btnShowdownAction');
   const arenaHandGrid = document.getElementById('arenaHandGrid');
+  const arenaHandSection = document.getElementById('arenaHandSection');
+  const arenaHandNudgePill = document.getElementById('arenaHandNudgePill');
+  const btnRallyHowToPlay = document.getElementById('btnRallyHowToPlay');
+  const rallyTutorialLayer = document.getElementById('rallyTutorialLayer');
+  const rallyTutorialPopover = document.getElementById('rallyTutorialPopover');
+  const tutorialArrow = document.getElementById('tutorialArrow');
+  const tutorialAvatar = document.getElementById('tutorialAvatar');
+  const tutorialBadge = document.getElementById('tutorialBadge');
+  const tutorialTitle = document.getElementById('tutorialTitle');
+  const tutorialBody = document.getElementById('tutorialBody');
+  const tutorialStepDots = document.getElementById('tutorialStepDots');
+  const btnTutorialNext = document.getElementById('btnTutorialNext');
+  const btnTutorialSkip = document.getElementById('btnTutorialSkip');
 
   // Math Supercharge Elements
   const mathChallengeModal = document.getElementById('mathChallengeModal');
@@ -1998,7 +2011,7 @@
 
   let mathTimerInterval = null;
 
-  function triggerMathChallenge(contextDesc, gapValue = null, onComplete) {
+  function triggerMathChallenge(param, onComplete) {
     if (!mathChallengeModal) {
       if (onComplete) onComplete(0);
       return;
@@ -2007,29 +2020,93 @@
     clearInterval(mathTimerInterval);
     mathChallengeModal.style.display = 'flex';
 
+    if (isRallyTutorialActive) {
+      setTutorialStep('math_boost');
+    }
+
     let questionText = '';
     let correctVal = 0;
     let options = [];
+    let badgeText = '⚡ 5TH GRADE POWER BOOST';
+    let contextText = 'Solve in 10s to supercharge your card with +1 Power!';
 
-    if (gapValue !== null && gapValue > 0) {
-      // 5th Grade Subtraction Gap Question
-      if (mathChallengeBadge) mathChallengeBadge.textContent = '⚡ 5TH GRADE GAP CALCULATION';
-      if (mathChallengeContext) mathChallengeContext.textContent = contextDesc || 'Calculate the difference to tie or take the lead!';
-      correctVal = gapValue;
-      questionText = `Point Gap: ${correctVal} needed! What is ${correctVal + 5} - 5?`;
-      // Generate multiple choice options around correctVal
-      options = [correctVal, correctVal + 1, Math.max(1, correctVal - 1)];
+    const cardName = (typeof param === 'object' && param.cardName) ? param.cardName : 'Your Card';
+    const cardPower = (typeof param === 'object' && param.cardPower !== undefined) ? param.cardPower : 5;
+    const nodeAiScore = (typeof param === 'object' && param.nodeAiScore !== undefined) ? param.nodeAiScore : 0;
+    const nodePlayerScore = (typeof param === 'object' && param.nodePlayerScore !== undefined) ? param.nodePlayerScore : 0;
+    const isMultiCardContest = (nodeAiScore > 0 && nodePlayerScore > 0);
+
+    // 1) Multi-Card Lane Math: Adding and subtracting 3 numbers total
+    if (isMultiCardContest) {
+      const projectedPlayerTotal = nodePlayerScore + cardPower;
+      badgeText = '⚡ 5TH GRADE SCORE LEAD CALCULATION';
+
+      if (projectedPlayerTotal > nodeAiScore) {
+        correctVal = projectedPlayerTotal - nodeAiScore;
+        contextText = `Guide has ${nodeAiScore} Pts. You currently have ${nodePlayerScore} Pts, and this card adds +${cardPower} Pts!`;
+        questionText = `You will be in the lead by how many points?`;
+        options = [correctVal, correctVal + 1, Math.max(1, correctVal - 1)];
+      } else if (projectedPlayerTotal < nodeAiScore) {
+        correctVal = nodeAiScore - projectedPlayerTotal;
+        contextText = `Guide has ${nodeAiScore} Pts. You have ${nodePlayerScore} Pts + ${cardPower} Pts from this card.`;
+        questionText = `How many points behind will you be?`;
+        options = [correctVal, correctVal + 1, Math.max(1, correctVal - 1)];
+      } else {
+        correctVal = projectedPlayerTotal;
+        contextText = `Guide has ${nodeAiScore} Pts. Adding this card (+${cardPower}) ties the landmark!`;
+        questionText = `What will your new stop score be (${nodePlayerScore} + ${cardPower})?`;
+        options = [correctVal, correctVal + 2, Math.max(1, correctVal - 2)];
+      }
     } else {
-      // 5th Grade Multiplication Supercharge (Tables 4 to 9)
-      if (mathChallengeBadge) mathChallengeBadge.textContent = '⚡ 5TH GRADE POWER BOOST';
-      if (mathChallengeContext) mathChallengeContext.textContent = contextDesc || 'Solve in 10s to supercharge your card with +1 Power!';
-      const tablePool = [4, 5, 6, 7, 8, 9];
-      const a = tablePool[Math.floor(Math.random() * tablePool.length)];
-      const b = [3, 4, 6, 7, 8, 9][Math.floor(Math.random() * 6)];
-      correctVal = a * b;
-      questionText = `${a} × ${b} = ?`;
-      options = [correctVal, correctVal + a, Math.max(2, correctVal - b)];
+      // 2) 50% 5th Grade Multiplication, 50% 5th Grade Division
+      const isDivision = Math.random() < 0.5;
+
+      if (isDivision) {
+        badgeText = '⚡ 5TH GRADE DIVISION FACT';
+        contextText = `Solve to supercharge ${cardName} with +1 Power!`;
+        const divisionFacts = [
+          { d: 56, s: 7, q: 8 },
+          { d: 56, s: 8, q: 7 },
+          { d: 72, s: 9, q: 8 },
+          { d: 72, s: 8, q: 9 },
+          { d: 63, s: 7, q: 9 },
+          { d: 63, s: 9, q: 7 },
+          { d: 54, s: 6, q: 9 },
+          { d: 54, s: 9, q: 6 },
+          { d: 48, s: 6, q: 8 },
+          { d: 48, s: 8, q: 6 },
+          { d: 42, s: 6, q: 7 },
+          { d: 42, s: 7, q: 6 },
+          { d: 81, s: 9, q: 9 },
+          { d: 64, s: 8, q: 8 },
+          { d: 49, s: 7, q: 7 },
+          { d: 36, s: 4, q: 9 },
+          { d: 36, s: 6, q: 6 },
+          { d: 45, s: 5, q: 9 },
+          { d: 45, s: 9, q: 5 },
+          { d: 84, s: 12, q: 7 },
+          { d: 96, s: 12, q: 8 },
+          { d: 108, s: 12, q: 9 }
+        ];
+        const fact = divisionFacts[Math.floor(Math.random() * divisionFacts.length)];
+        correctVal = fact.q;
+        questionText = `${fact.d} ÷ ${fact.s} = ?`;
+        options = [correctVal, correctVal + 1, Math.max(2, correctVal - 1)];
+      } else {
+        badgeText = '⚡ 5TH GRADE MULTIPLICATION FACT';
+        contextText = `Solve to supercharge ${cardName} with +1 Power!`;
+        const poolA = [6, 7, 8, 9, 11, 12];
+        const poolB = [4, 5, 6, 7, 8, 9];
+        const a = poolA[Math.floor(Math.random() * poolA.length)];
+        const b = poolB[Math.floor(Math.random() * poolB.length)];
+        correctVal = a * b;
+        questionText = `${a} × ${b} = ?`;
+        options = [correctVal, correctVal + b, Math.max(4, correctVal - a)];
+      }
     }
+
+    if (mathChallengeBadge) mathChallengeBadge.textContent = badgeText;
+    if (mathChallengeContext) mathChallengeContext.textContent = contextText;
 
     // Shuffle unique options
     options = Array.from(new Set(options));
@@ -2046,6 +2123,10 @@
         btn.textContent = opt;
         btn.onclick = () => {
           clearInterval(mathTimerInterval);
+          if (isRallyTutorialActive && currentTutorialStep === 'math_boost') {
+            clearTutorialHighlight();
+            if (rallyTutorialLayer) rallyTutorialLayer.style.display = 'none';
+          }
           const isCorrect = (opt === correctVal);
           btn.classList.add(isCorrect ? 'math-correct' : 'math-wrong');
 
@@ -2070,6 +2151,10 @@
       if (mathTimerCount) mathTimerCount.textContent = timeLeft;
       if (timeLeft <= 0) {
         clearInterval(mathTimerInterval);
+        if (isRallyTutorialActive && currentTutorialStep === 'math_boost') {
+          clearTutorialHighlight();
+          if (rallyTutorialLayer) rallyTutorialLayer.style.display = 'none';
+        }
         mathChallengeModal.style.display = 'none';
         if (onComplete) onComplete(0);
       }
@@ -2078,6 +2163,10 @@
     if (btnSkipMath) {
       btnSkipMath.onclick = () => {
         clearInterval(mathTimerInterval);
+        if (isRallyTutorialActive && currentTutorialStep === 'math_boost') {
+          clearTutorialHighlight();
+          if (rallyTutorialLayer) rallyTutorialLayer.style.display = 'none';
+        }
         mathChallengeModal.style.display = 'none';
         if (onComplete) onComplete(0);
       };
@@ -2125,6 +2214,229 @@
     `;
 
     return cardDiv;
+  }
+
+  // =========================================================================
+  // Road Trip Rally Interactive Walkthrough & Mobile Optimization Engine
+  // =========================================================================
+  let isRallyTutorialActive = false;
+  let currentTutorialStep = null;
+  let tutorialHighlightEl = null;
+
+  const TUTORIAL_STEPS_CONFIG = {
+    welcome: {
+      avatar: '🏕️',
+      badge: 'GUIDE • STEP 1 OF 4',
+      title: 'Welcome to Road Trip Rally!',
+      body: 'Your goal is simple: <strong>Win more Scenic Stops than your Trail Guide!</strong> Each stop is a battle of travel cards. The higher score wins the landmark!',
+      stepIndex: 0,
+      btnText: 'Let\'s Play! ➡️',
+      targetSelector: '#arenaLanesBoard'
+    },
+    pick_card: {
+      avatar: '👇',
+      badge: 'GUIDE • STEP 2 OF 4',
+      title: 'Pick a Card from Your Hand!',
+      body: 'These are your cards in <strong>Your Rally Hand</strong> below! <strong>Tap any card</strong> to choose it for your move.',
+      stepIndex: 1,
+      btnText: 'Got It! 👍',
+      targetSelector: '#arenaHandSection'
+    },
+    place_card: {
+      avatar: '⛰️',
+      badge: 'GUIDE • STEP 3 OF 4',
+      title: 'Deploy to a Scenic Stop!',
+      body: 'Card selected! Now tap any glowing <strong>DEPLOY HERE ⚡</strong> spot above to play it! <strong>Pro Tip:</strong> Matching the landmark\'s region (Mountain or Coast) gives <strong>+2 Bonus Points</strong>!',
+      stepIndex: 2,
+      btnText: 'Deploying! 🎯',
+      targetSelector: '.lane-slot-empty.slot-droppable'
+    },
+    math_boost: {
+      avatar: '⚡',
+      badge: 'BONUS • POWER BOOST',
+      title: 'Supercharge Your Card!',
+      body: 'Solve this quick math problem to give your card a <strong>+1 Power Boost</strong>! If you\'re not sure, tap <em>Skip</em> anytime to play at normal power.',
+      stepIndex: 2,
+      btnText: 'Solve Math! 🧠',
+      targetSelector: '#mathChallengeModal .math-challenge-card'
+    },
+    synergy_info: {
+      avatar: '✨',
+      badge: 'GUIDE • STEP 4 OF 4',
+      title: 'Round 2: Capital Synergies!',
+      body: 'In Round 2, you place another card! <strong>Secret Weapon:</strong> If you place a <strong>State</strong> and its matching <strong>Capital</strong> at the same landmark, you unlock a <strong>huge +2 Synergy Boost</strong>!',
+      stepIndex: 3,
+      btnText: 'Awesome! 🚀',
+      targetSelector: '#arenaLanesBoard'
+    },
+    mystery_info: {
+      avatar: '❓',
+      badge: 'ROUND 3 • SECRET DESTINATIONS',
+      title: 'Mystery Round: Face-Down Cards!',
+      body: 'In Round 3, cards are placed <strong>FACE DOWN</strong> as secrets! The Guide placed mystery cards, and your card will be secret too. Neither side knows who will win until the final reveal!',
+      stepIndex: 3,
+      btnText: 'Place Mystery Card! 🃏',
+      targetSelector: '#arenaHandSection'
+    },
+    reveal_info: {
+      avatar: '🌟',
+      badge: 'FINAL STEP • THE GRAND REVEAL',
+      title: 'Reveal Secret Destinations!',
+      body: 'All cards are locked in! Tap the glowing <strong>🌟 REVEAL DESTINATIONS</strong> button above to flip all mystery cards, see everyone\'s true power, and crown the winner!',
+      stepIndex: 3,
+      btnText: 'Reveal Destinations! 🏆',
+      targetSelector: '#btnShowdownAction'
+    }
+  };
+
+  function startRallyTutorial(force = false) {
+    if (!activeMatch) return;
+    if (!force && activeMatch.nodeCount !== 2) return;
+
+    isRallyTutorialActive = true;
+    setTutorialStep('welcome');
+  }
+
+  function stopRallyTutorial() {
+    isRallyTutorialActive = false;
+    currentTutorialStep = null;
+    clearTutorialHighlight();
+    if (rallyTutorialLayer) rallyTutorialLayer.style.display = 'none';
+  }
+
+  function clearTutorialHighlight() {
+    if (tutorialHighlightEl) {
+      tutorialHighlightEl.classList.remove('tutorial-spotlight-active');
+      tutorialHighlightEl = null;
+    }
+    document.querySelectorAll('.tutorial-spotlight-active').forEach(el => {
+      el.classList.remove('tutorial-spotlight-active');
+    });
+  }
+
+  function setTutorialStep(stepName) {
+    if (!isRallyTutorialActive || !activeMatch) return;
+    const config = TUTORIAL_STEPS_CONFIG[stepName];
+    if (!config || !rallyTutorialLayer || !rallyTutorialPopover) return;
+
+    currentTutorialStep = stepName;
+    clearTutorialHighlight();
+
+    // Populate details
+    if (tutorialAvatar) tutorialAvatar.textContent = config.avatar;
+    if (tutorialBadge) tutorialBadge.textContent = config.badge;
+    if (tutorialTitle) tutorialTitle.textContent = config.title;
+    if (tutorialBody) tutorialBody.innerHTML = config.body;
+    if (btnTutorialNext) btnTutorialNext.innerHTML = `<span>${config.btnText}</span>`;
+
+    // Update step dots
+    if (tutorialStepDots) {
+      const dots = tutorialStepDots.querySelectorAll('.dot');
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === config.stepIndex);
+      });
+    }
+
+    // Target element highlighting & positioning
+    let targetEl = null;
+    if (config.targetSelector) {
+      targetEl = document.querySelector(config.targetSelector);
+    }
+
+    rallyTutorialLayer.style.display = 'block';
+
+    if (targetEl) {
+      targetEl.classList.add('tutorial-spotlight-active');
+      tutorialHighlightEl = targetEl;
+
+      // Ensure target is in view
+      if (stepName === 'pick_card') {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      } else if (stepName === 'place_card') {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    positionTutorialPopover(targetEl, stepName);
+  }
+
+  function positionTutorialPopover(targetEl, stepName) {
+    if (!rallyTutorialPopover) return;
+
+    const isMobile = window.innerWidth <= 600;
+    const arrowEl = tutorialArrow;
+    if (arrowEl) arrowEl.className = 'tutorial-arrow';
+
+    if (!targetEl || isMobile) {
+      rallyTutorialPopover.style.left = '50%';
+      rallyTutorialPopover.style.transform = 'translateX(-50%)';
+      if (stepName === 'pick_card') {
+        rallyTutorialPopover.style.top = 'auto';
+        rallyTutorialPopover.style.bottom = '180px';
+        if (arrowEl) arrowEl.classList.add('arrow-bottom');
+      } else if (stepName === 'place_card') {
+        rallyTutorialPopover.style.top = '120px';
+        rallyTutorialPopover.style.bottom = 'auto';
+        if (arrowEl) arrowEl.classList.add('arrow-top');
+      } else {
+        rallyTutorialPopover.style.top = 'auto';
+        rallyTutorialPopover.style.bottom = '80px';
+      }
+      return;
+    }
+
+    const rect = targetEl.getBoundingClientRect();
+    const popoverWidth = Math.min(440, window.innerWidth - 32);
+    let left = rect.left + rect.width / 2 - popoverWidth / 2;
+    left = Math.max(16, Math.min(window.innerWidth - popoverWidth - 16, left));
+
+    rallyTutorialPopover.style.left = `${left}px`;
+    rallyTutorialPopover.style.transform = 'none';
+
+    const popoverHeight = rallyTutorialPopover.offsetHeight || 180;
+    const spaceAbove = rect.top;
+
+    if (stepName === 'pick_card' || (spaceAbove >= popoverHeight + 20 && stepName !== 'place_card')) {
+      // Place above target with clearance
+      const top = Math.max(16, rect.top - popoverHeight - 16);
+      rallyTutorialPopover.style.top = `${top}px`;
+      rallyTutorialPopover.style.bottom = 'auto';
+      if (arrowEl) {
+        arrowEl.classList.add('arrow-bottom');
+        const arrowLeft = Math.max(24, Math.min(popoverWidth - 24, rect.left + rect.width / 2 - left));
+        arrowEl.style.left = `${arrowLeft}px`;
+      }
+    } else {
+      // Place below target with clearance
+      const top = Math.min(window.innerHeight - popoverHeight - 16, rect.bottom + 16);
+      rallyTutorialPopover.style.top = `${top}px`;
+      rallyTutorialPopover.style.bottom = 'auto';
+      if (arrowEl) {
+        arrowEl.classList.add('arrow-top');
+        const arrowLeft = Math.max(24, Math.min(popoverWidth - 24, rect.left + rect.width / 2 - left));
+        arrowEl.style.left = `${arrowLeft}px`;
+      }
+    }
+  }
+
+  function checkHandNudgeVisibility() {
+    if (!arenaHandNudgePill || !arenaHandSection) return;
+    if (window.innerWidth > 600 || battleSubPanel !== 'match' || !activeMatch || activeMatch.matchFinished) {
+      arenaHandNudgePill.style.display = 'none';
+      return;
+    }
+
+    // Only show on mobile phones if it's the player's turn to play and no card selected yet
+    const isPlayerTurn = activeMatch.phase === 'player_turn' || activeMatch.phase === 'blind_prep';
+    if (!isPlayerTurn || activeMatch.selectedCardId) {
+      arenaHandNudgePill.style.display = 'none';
+      return;
+    }
+
+    const rect = arenaHandSection.getBoundingClientRect();
+    // If cards in hand are below the visible mobile viewport fold
+    const isHidden = rect.top > (window.innerHeight - 120);
+    arenaHandNudgePill.style.display = isHidden ? 'flex' : 'none';
   }
 
   function renderBattleArena() {
@@ -2210,6 +2522,13 @@
     recalculateNodeScores();
     renderMatchUI();
 
+    // Auto-launch walkthrough tutorial on Stage 1 (2 nodes)
+    if (nodeCount === 2) {
+      startRallyTutorial();
+    } else {
+      stopRallyTutorial();
+    }
+
     // Computer goes first!
     setTimeout(() => {
       executeAiTurn();
@@ -2274,6 +2593,25 @@
       recalculateNodeScores();
       renderMatchUI();
 
+      if (isRallyTutorialActive) {
+        if (activeMatch.round === 1) {
+          setTimeout(() => {
+            if (isRallyTutorialActive && (currentTutorialStep === 'welcome' || !currentTutorialStep)) {
+              setTutorialStep('pick_card');
+            }
+          }, 350);
+        } else if (activeMatch.round === 2 && activeMatch.roundPlaysMade === 0) {
+          setTutorialStep('synergy_info');
+        }
+      } else {
+        if (window.innerWidth <= 600 && arenaHandSection) {
+          setTimeout(() => {
+            arenaHandSection.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          }, 450);
+        }
+      }
+      setTimeout(checkHandNudgeVisibility, 500);
+
     } else if (activeMatch.round === 3) {
       // Round 3 (The Grand Double Showdown): AI places remaining 2 cards FACE DOWN
       const aiDeck = activeMatch.aiRemainingDeck;
@@ -2299,6 +2637,11 @@
       playAudioCue('drop');
       recalculateNodeScores();
       renderMatchUI();
+
+      if (isRallyTutorialActive && activeMatch.round === 3) {
+        setTutorialStep('mystery_info');
+      }
+      checkHandNudgeVisibility();
     }
   }
 
@@ -2496,6 +2839,15 @@
           cardEl.addEventListener('click', () => {
             activeMatch.selectedCardId = isSelected ? null : cardId;
             renderMatchUI();
+
+            if (isRallyTutorialActive) {
+              if (activeMatch.selectedCardId) {
+                setTutorialStep('place_card');
+              } else {
+                setTutorialStep('pick_card');
+              }
+            }
+            checkHandNudgeVisibility();
           });
         }
         arenaHandGrid.appendChild(cardEl);
@@ -2570,18 +2922,14 @@
 
     const selectedCard = BATTLE_CARDS_MAP[cardId];
     const cardName = selectedCard ? selectedCard.name : 'Card';
+    const cardPower = calculateCardNodePower(cardId, node, battleDeck, 'player', 0);
 
-    // Check if node has point gap to determine question type
-    let gap = null;
-    if (node.aiScore > node.playerScore) {
-      gap = node.aiScore - node.playerScore;
-    }
-
-    const contextDesc = gap
-      ? `Guide has ${node.aiScore} Pts. Calculate the point difference to win the landmark!`
-      : `Supercharge ${cardName} with +1 Point!`;
-
-    triggerMathChallenge(contextDesc, gap, (mathBonus) => {
+    triggerMathChallenge({
+      cardName,
+      cardPower,
+      nodeAiScore: node.aiScore,
+      nodePlayerScore: node.playerScore
+    }, (mathBonus) => {
       const targetPlays = getRequiredPlaysForRound(activeMatch.round, activeMatch.nodeCount);
 
       if (activeMatch.round <= 2) {
@@ -2623,6 +2971,9 @@
         } else {
           // Still have 1 more reinforcement card to play in Round 2
           renderMatchUI();
+          if (isRallyTutorialActive) {
+            setTutorialStep('pick_card');
+          }
         }
 
       } else if (activeMatch.round === 3) {
@@ -2642,17 +2993,26 @@
 
         if (activeMatch.roundPlaysMade >= targetPlays || activeMatch.playerRemainingDeck.length === 0) {
           activeMatch.phase = 'blind_ready';
+          renderMatchUI();
+          if (isRallyTutorialActive) {
+            setTutorialStep('reveal_info');
+          }
         } else {
           activeMatch.phase = 'blind_prep';
+          renderMatchUI();
+          if (isRallyTutorialActive) {
+            setTutorialStep('pick_card');
+          }
         }
-
-        renderMatchUI();
       }
     });
   }
 
   function executeShowdownReveal() {
     if (!activeMatch || activeMatch.matchFinished) return;
+    if (isRallyTutorialActive) {
+      stopRallyTutorial();
+    }
     if (btnShowdownAction) btnShowdownAction.style.display = 'none';
 
     playAudioCue('showdown');
@@ -2699,6 +3059,7 @@
 
   function finishMatch() {
     if (!activeMatch) return;
+    stopRallyTutorial();
     activeMatch.matchFinished = true;
     activeMatch.phase = 'finished';
 
@@ -3139,6 +3500,71 @@
       });
     }
 
+    // How to Play button
+    if (btnRallyHowToPlay) {
+      btnRallyHowToPlay.addEventListener('click', () => {
+        startRallyTutorial(true);
+      });
+    }
+
+    // Tutorial action buttons
+    if (btnTutorialNext) {
+      btnTutorialNext.addEventListener('click', () => {
+        if (currentTutorialStep === 'welcome') {
+          if (activeMatch && (activeMatch.phase === 'player_turn' || activeMatch.phase === 'blind_prep')) {
+            setTutorialStep('pick_card');
+          } else {
+            if (rallyTutorialLayer) rallyTutorialLayer.style.display = 'none';
+            clearTutorialHighlight();
+          }
+        } else if (currentTutorialStep === 'pick_card') {
+          if (arenaHandSection) arenaHandSection.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        } else if (currentTutorialStep === 'place_card') {
+          const droppable = document.querySelector('.lane-slot-empty.slot-droppable');
+          if (droppable) droppable.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (currentTutorialStep === 'synergy_info' || currentTutorialStep === 'mystery_info') {
+          setTutorialStep('pick_card');
+        } else if (currentTutorialStep === 'reveal_info') {
+          stopRallyTutorial();
+          executeShowdownReveal();
+        } else {
+          if (rallyTutorialLayer) rallyTutorialLayer.style.display = 'none';
+          clearTutorialHighlight();
+        }
+      });
+    }
+
+    if (btnTutorialSkip) {
+      btnTutorialSkip.addEventListener('click', () => {
+        stopRallyTutorial();
+      });
+    }
+
+    // Floating Hand Nudge Pill
+    if (arenaHandNudgePill) {
+      arenaHandNudgePill.addEventListener('click', () => {
+        if (arenaHandSection) {
+          arenaHandSection.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+        arenaHandNudgePill.style.display = 'none';
+      });
+    }
+
+    window.addEventListener('scroll', checkHandNudgeVisibility, { passive: true });
+    window.addEventListener('resize', () => {
+      checkHandNudgeVisibility();
+      if (isRallyTutorialActive && currentTutorialStep) {
+        const config = TUTORIAL_STEPS_CONFIG[currentTutorialStep];
+        const targetEl = config?.targetSelector ? document.querySelector(config.targetSelector) : null;
+        positionTutorialPopover(targetEl, currentTutorialStep);
+      }
+    }, { passive: true });
+
+    const mainLayoutEl = document.querySelector('.main-layout');
+    if (mainLayoutEl) {
+      mainLayoutEl.addEventListener('scroll', checkHandNudgeVisibility, { passive: true });
+    }
+
     // Showdown Reveal Trigger
     if (btnShowdownAction) {
       btnShowdownAction.addEventListener('click', executeShowdownReveal);
@@ -3222,7 +3648,7 @@
   function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register(`./sw.js?v=14`).then(reg => {
+        navigator.serviceWorker.register(`./sw.js?v=15`).then(reg => {
           // Proactively check for newer versions on iOS / mobile Safari
           reg.update().catch(() => {});
 

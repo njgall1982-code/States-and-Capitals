@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles.css?v=9">
+  <link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
 
@@ -41,6 +41,9 @@
           <span style="color: var(--text-subtle);">•</span>
           <span id="headerMasteredPercent">0%</span>
         </div>
+        <button id="btnOpenPacks" class="btn-settings-toggle btn-pack-toggle" title="Open Booster Packs" aria-label="Booster Packs">
+          📦<span class="pack-badge-bubble" id="headerPackBadge" style="display:none;">0</span>
+        </button>
         <button id="btnOpenVault" class="btn-settings-toggle" title="Dad Joke Vault & Trophies" aria-label="Open Dad Joke Vault">
           🏆
         </button>
@@ -62,7 +65,7 @@
       </div>
     </div>
 
-    <!-- Top View Switcher (Flashcards vs Map Quiz) -->
+    <!-- Top View Switcher (Flashcards vs Map Quiz vs Battle Arena) -->
     <div class="view-switch-bar">
       <div class="segmented-group view-toggle-group" id="viewToggleGroup" role="tablist" aria-label="Mode Selection">
         <button class="segmented-btn active" id="tabFlashcards" role="tab" aria-selected="true" data-view="cards">
@@ -70,6 +73,9 @@
         </button>
         <button class="segmented-btn" id="tabMapQuiz" role="tab" aria-selected="false" data-view="map">
           🗺️ Map Quiz
+        </button>
+        <button class="segmented-btn" id="tabBattleArena" role="tab" aria-selected="false" data-view="battle">
+          ⚔️ Battle Arena <span class="badge-tab-pill" id="navPackBadge" style="display:none;">!</span>
         </button>
       </div>
     </div>
@@ -249,6 +255,212 @@
       </section>
     </div><!-- /mapView -->
 
+    <!-- Battle Arena View (State Clash Minigame) -->
+    <div class="view-panel" id="battleView">
+      <div class="battle-arena-container">
+        
+        <!-- Battle Sub-Navigation (Duel vs Binder/Deck vs Challengers) -->
+        <div class="battle-nav-bar">
+          <div class="segmented-group battle-segmented-group" id="battleSubNavGroup">
+            <button class="segmented-btn active" id="btnSubNavMatch" data-subpanel="match">
+              ⚔️ Clash Duel
+            </button>
+            <button class="segmented-btn" id="btnSubNavBinder" data-subpanel="binder">
+              🎒 Deck & Binder <span class="badge-tab-pill" id="binderDeckCountPill">5/5</span>
+            </button>
+            <button class="segmented-btn" id="btnSubNavLadder" data-subpanel="ladder">
+              🗺️ Challengers
+            </button>
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- Subpanel 1: Clash Duel Arena -->
+        <!-- ============================================================= -->
+        <div class="battle-subpanel active" id="battlePanelMatch">
+          
+          <!-- Opponent Header & Match Info -->
+          <div class="arena-top-banner">
+            <div class="arena-opponent-info">
+              <span class="arena-avatar" id="arenaOpponentAvatar">🏕️</span>
+              <div>
+                <div class="arena-opponent-name" id="arenaOpponentName">Campfire Scout</div>
+                <div class="arena-opponent-title" id="arenaOpponentTitle">Trail Rookie • Stage 1</div>
+              </div>
+            </div>
+            <button class="btn-arena-change-opp" id="btnChangeOpponent" title="Change Computer Challenger">
+              Change Opponent 🗺️
+            </button>
+          </div>
+
+          <!-- Scoreboard & Biome Triangle Guide -->
+          <div class="arena-scoreboard-card">
+            <div class="scoreboard-scores">
+              <div class="score-player">
+                <span class="score-label">YOU</span>
+                <span class="score-num" id="arenaPlayerScore">0</span>
+              </div>
+              <div class="score-round-dots" id="arenaRoundDots">
+                <span class="round-dot active" data-round="1">1</span>
+                <span class="round-dot" data-round="2">2</span>
+                <span class="round-dot" data-round="3">3</span>
+                <span class="round-dot" data-round="4">4</span>
+                <span class="round-dot" data-round="5">5</span>
+              </div>
+              <div class="score-ai">
+                <span class="score-num" id="arenaAiScore">0</span>
+                <span class="score-label">RIVAL</span>
+              </div>
+            </div>
+            
+            <div class="biome-triad-hint">
+              <span class="biome-triad-step">⛰️ Mountain <span class="triad-arrow">▶</span> 🌊 Coast</span>
+              <span class="triad-sep">•</span>
+              <span class="biome-triad-step">🌊 Coast <span class="triad-arrow">▶</span> 🌾 Heartland</span>
+              <span class="triad-sep">•</span>
+              <span class="biome-triad-step">🌾 Heartland <span class="triad-arrow">▶</span> ⛰️ Mountain</span>
+              <span class="triad-bonus">(+3 Power!)</span>
+            </div>
+          </div>
+
+          <!-- The Clash Ring (Center Duel Area) -->
+          <div class="arena-clash-ring" id="arenaClashRing">
+            
+            <!-- AI Challenger Slot -->
+            <div class="clash-slot clash-slot-ai" id="aiCardSlot">
+              <div class="card-slot-placeholder" id="aiSlotPlaceholder">
+                <div class="ai-mystery-card">
+                  <span class="mystery-icon">❓</span>
+                  <span class="mystery-text">Rival's Card</span>
+                </div>
+              </div>
+              <div class="clash-card-mount" id="aiCardMount" style="display: none;"></div>
+            </div>
+
+            <!-- Center Clash Impact / Announcer -->
+            <div class="clash-vs-hub" id="clashVsHub">
+              <div class="clash-vs-badge" id="clashVsBadge">VS</div>
+              <div class="clash-result-banner" id="clashResultBanner" style="display: none;">
+                <div class="clash-result-title" id="clashResultTitle">-</div>
+                <div class="clash-result-desc" id="clashResultDesc">-</div>
+              </div>
+            </div>
+
+            <!-- Player Slot -->
+            <div class="clash-slot clash-slot-player" id="playerCardSlot">
+              <div class="card-slot-placeholder" id="playerSlotPlaceholder">
+                <span class="player-slot-prompt">Select a card below to duel!</span>
+              </div>
+              <div class="clash-card-mount" id="playerCardMount" style="display: none;"></div>
+            </div>
+
+          </div>
+
+          <!-- Bottom Hand Selection Tray -->
+          <div class="arena-hand-section">
+            <div class="hand-header">
+              <span class="hand-title">Your 5-Card Battle Hand</span>
+              <button class="btn-clash-trigger" id="btnClashAction" disabled>
+                <span>⚡ Clash Cards!</span>
+              </button>
+            </div>
+            <div class="arena-hand-grid" id="arenaHandGrid">
+              <!-- Rendered dynamically from player's 5 deck cards -->
+            </div>
+          </div>
+
+          <!-- Match Over Result Overlay -->
+          <div class="arena-match-overlay" id="arenaMatchOverlay" style="display: none;">
+            <div class="match-overlay-card" style="position: relative;">
+              <button class="btn-close-sheet" id="btnCloseMatchOverlay" style="position: absolute; top: 12px; right: 12px;" aria-label="Close">✕</button>
+              <div class="match-overlay-icon" id="matchOverlayIcon">🏆</div>
+              <h2 class="match-overlay-title" id="matchOverlayTitle">VICTORY!</h2>
+              <p class="match-overlay-desc" id="matchOverlayDesc">You conquered Stage 1!</p>
+              <div class="match-overlay-rewards" id="matchOverlayRewards">
+                <div class="reward-pill" id="matchRewardPill">📦 +1 Booster Pack Earned!</div>
+              </div>
+              <div class="match-overlay-actions" style="flex-direction: column; gap: 0.5rem;">
+                <button class="btn-primary-action" id="btnMatchNextRival" style="display: none; width: 100%;">
+                  <span>Battle Next Rival ⚔️</span>
+                </button>
+                <div style="display: flex; gap: 0.5rem; width: 100%;">
+                  <button class="btn-action btn-nav" id="btnMatchPlayAgain" style="flex: 1;">
+                    <span>Rematch 🔄</span>
+                  </button>
+                  <button class="btn-action btn-nav" id="btnMatchGoLadder" style="flex: 1;">
+                    <span>Challengers 🗺️</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /battlePanelMatch -->
+
+        <!-- ============================================================= -->
+        <!-- Subpanel 2: Deck & Binder -->
+        <!-- ============================================================= -->
+        <div class="battle-subpanel" id="battlePanelBinder" style="display: none;">
+          
+          <!-- Active 5-Card Deck Dock -->
+          <div class="binder-deck-dock">
+            <div class="dock-header">
+              <div>
+                <span class="dock-title">Active 5-Card Battle Deck</span>
+                <span class="dock-subtitle" id="dockCountLabel">5 of 5 Selected</span>
+              </div>
+              <button class="btn-quick-fuse" id="btnQuickFuse" title="Combine duplicates to upgrade stars">
+                ⚡ Fuse All Duplicates
+              </button>
+            </div>
+            
+            <div class="dock-slots-row" id="dockSlotsRow">
+              <!-- 5 active deck slots -->
+            </div>
+
+            <!-- Home State & Capital Synergy Banner -->
+            <div class="synergy-dock-banner" id="synergyDockBanner">
+              <span class="synergy-icon">✨</span>
+              <span class="synergy-text" id="synergyDockText">No Capital Synergies yet. Pair a State with its Capital for +2 Power!</span>
+            </div>
+          </div>
+
+          <!-- Filter & Search Controls -->
+          <div class="binder-controls-bar">
+            <div class="binder-filters">
+              <button class="binder-filter-btn active" data-filter="all">All (<span id="binderCountAll">0</span>/100)</button>
+              <button class="binder-filter-btn" data-filter="mountain">⛰️ Mountain (<span id="binderCountMountain">0</span>)</button>
+              <button class="binder-filter-btn" data-filter="coast">🌊 Coast (<span id="binderCountCoast">0</span>)</button>
+              <button class="binder-filter-btn" data-filter="heartland">🌾 Heartland (<span id="binderCountHeartland">0</span>)</button>
+              <button class="binder-filter-btn" data-filter="state">🏛️ States (<span id="binderCountState">0</span>)</button>
+              <button class="binder-filter-btn" data-filter="capital">⭐ Capitals (<span id="binderCountCapital">0</span>)</button>
+            </div>
+          </div>
+
+          <!-- 100-Card Catalog Grid -->
+          <div class="binder-cards-grid" id="binderCardsGrid">
+            <!-- 100 cards rendered dynamically -->
+          </div>
+
+        </div><!-- /battlePanelBinder -->
+
+        <!-- ============================================================= -->
+        <!-- Subpanel 3: Challenger Ladder -->
+        <!-- ============================================================= -->
+        <div class="battle-subpanel" id="battlePanelLadder" style="display: none;">
+          <div class="ladder-header">
+            <h2>🗺️ Adventure Road: Computer Challengers</h2>
+            <p>Defeat each rival along the trail to unlock higher stages, earn trophies, and win booster packs!</p>
+          </div>
+
+          <div class="ladder-list" id="ladderList">
+            <!-- 5 Challenger stages rendered dynamically -->
+          </div>
+        </div><!-- /battlePanelLadder -->
+
+      </div>
+    </div><!-- /battleView -->
+
   </div>
 
   <!-- Settings Modal Sheet (Houses all controls cleanly) -->
@@ -372,6 +584,43 @@
     </div>
   </div>
 
+  <!-- Booster Pack Opening Modal -->
+  <div class="modal-backdrop" id="packModal" role="dialog" aria-modal="true" aria-labelledby="packModalTitle">
+    <div class="pack-modal-content">
+      <div class="pack-header">
+        <span class="pack-badge" id="packModalBadge">✨ BOOSTER PACK UNLOCKED!</span>
+        <h2 id="packModalTitle">State Clash 3-Card Booster</h2>
+        <div class="pack-remaining-pill" id="packRemainingPill">📦 1 Pack Available</div>
+      </div>
+
+      <!-- Sealed Foil Stage -->
+      <div class="pack-sealed-stage" id="packSealedStage">
+        <div class="booster-foil-packet" id="boosterFoilPacket" tabindex="0" role="button" aria-label="Tap foil pack to rip open">
+          <div class="foil-glimmer"></div>
+          <div class="foil-emblem">⚔️</div>
+          <div class="foil-title">STATE CLASH</div>
+          <div class="foil-subtitle">3 BATTLE CARDS INSIDE</div>
+          <div class="foil-tear-strip">
+            <span>✂️ TAP TO RIP OPEN!</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revealed Cards Stage (3 Cards Side-by-Side) -->
+      <div class="pack-revealed-stage" id="packRevealedStage" style="display: none;">
+        <div class="pack-cards-row" id="packCardsRow">
+          <!-- 3 cards rendered dynamically with flip effect -->
+        </div>
+      </div>
+
+      <div class="pack-actions-bar">
+        <button class="btn-primary-action btn-pack-collect" id="btnPackCollect" style="display: none;">
+          <span>Collect All to Binder 🎒</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Dad Joke Milestone Modal -->
   <div class="modal-backdrop" id="jokeModal" role="dialog" aria-modal="true" aria-labelledby="jokeSetup">
     <div class="joke-modal-content">
@@ -399,9 +648,10 @@
   </div>
 
   <!-- Scripts -->
-  <script src="data/states.js?v=9"></script>
-  <script src="data/jokes.js?v=9"></script>
-  <script src="data/us-map-template.js?v=9"></script>
-  <script src="app.js?v=9"></script>
+  <script src="data/states.js?v=11"></script>
+  <script src="data/jokes.js?v=11"></script>
+  <script src="data/cards.js?v=11"></script>
+  <script src="data/us-map-template.js?v=11"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>

@@ -44,12 +44,16 @@ self.addEventListener('message', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Only handle http and https GET requests (skips chrome-extension://, file://, etc.)
+  if (!event.request.url.startsWith('http')) return;
+  if (event.request.method !== 'GET') return;
+
   // Network first: always try to fetch fresh files, fall back to cache only when offline
   event.respondWith(
     fetch(event.request)
       .then((response) => {
         // Clone and update cache with fresh network copy
-        if (response && response.status === 200 && event.request.method === 'GET') {
+        if (response && response.status === 200) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseClone);

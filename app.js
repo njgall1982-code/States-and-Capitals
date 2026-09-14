@@ -144,7 +144,7 @@
   const STORAGE_KEY_PENDING_PACKS = 'states_clash_packs_v1';
   const STORAGE_KEY_CHALLENGER_STAGE = 'states_clash_stage_v1';
   const STORAGE_KEY_DEFEATED_CHALLENGERS = 'states_clash_defeated_v1';
-  const CURRENT_CACHE_VERSION = 'states-capitals-v14';
+  const CURRENT_CACHE_VERSION = 'states-capitals-v16';
 
   // DOM Elements - Battle Arena & Pack System
   const tabBattleArena = document.getElementById('tabBattleArena');
@@ -247,6 +247,9 @@
   let activeMatch = null;
   let isOpeningPack = false;
   let packOpeningQueue = [];
+  let isRallyTutorialActive = false;
+  let currentTutorialStep = null;
+  let tutorialHighlightEl = null;
 
   let jokeQueue = [];
   let activeView = localStorage.getItem(STORAGE_KEY_ACTIVE_VIEW) || 'cards';
@@ -2219,9 +2222,6 @@
   // =========================================================================
   // Road Trip Rally Interactive Walkthrough & Mobile Optimization Engine
   // =========================================================================
-  let isRallyTutorialActive = false;
-  let currentTutorialStep = null;
-  let tutorialHighlightEl = null;
 
   const TUTORIAL_STEPS_CONFIG = {
     welcome: {
